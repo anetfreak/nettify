@@ -20,7 +20,6 @@ import java.io.FileWriter;
 
 import org.junit.Test;
 
-import poke.server.conf.ServerConf.NearestConf;
 import poke.server.conf.ServerConf.ResourceConf;
 import eye.Comm.Header;
 

@@ -193,7 +193,7 @@ public class HeartbeatManager extends Thread {
 
 		return b.build();
 	}
-
+	
 	@Override
 	public void run() {
 		logger.info("starting HB manager");

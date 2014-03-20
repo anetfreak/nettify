@@ -56,7 +56,7 @@ public class ManagementQueue {
 	}
 
 	public static void shutdown(boolean hard) {
-		// TODO shutdon workers
+		// TODO shutdown workers
 	}
 
 	public static void enqueueRequest(Management req, Channel ch,

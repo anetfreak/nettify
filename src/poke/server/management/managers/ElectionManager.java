@@ -20,8 +20,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import poke.server.management.ManagementQueue;
+import poke.server.management.ManagementQueue.ManagementQueueEntry;
 import eye.Comm.LeaderElection;
 import eye.Comm.LeaderElection.VoteAction;
+import eye.Comm.Management;
 
 /**
  * The election manager is used to determine leadership within the network.
@@ -93,5 +96,22 @@ public class ElectionManager {
 				// TODO nominate myself
 			}
 		}
+	}
+	
+	//Nominate for self and start the election
+	public void startElectionByVote() {
+		LeaderElection.Builder h = LeaderElection.newBuilder();
+		h.setNodeId(nodeId);
+		h.setVote(VoteAction.NOMINATE);
+		h.setBallotId("zero");
+		h.setDesc("Electing myself");
+
+		Management.Builder b = Management.newBuilder();
+		b.setElection(h.build());
+		
+		if (logger.isDebugEnabled())
+			logger.debug("Inbound management message received");
+
+//		ManagementQueue.enqueueResponse(b.build(), );
 	}
 }
