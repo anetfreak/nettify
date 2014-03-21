@@ -229,7 +229,15 @@ public class Server {
 				logger.info("Starting mgmt " + conf.getServer().getProperty("node.id") + ", listening on port = "
 						+ mport);
 				ChannelFuture f = b.bind(mport).syncUninterruptibly();
-
+				ElectionManager electionMgr;
+				String myId = conf.getServer().getProperty("node.id");
+				String str1 = conf.getServer().getProperty("node.votes");
+				int votes = 1;
+				if (str1 != null)
+					votes = Integer.parseInt(str1);
+				
+				electionMgr = ElectionManager.getInstance(myId, votes);
+				//electionMgr.setChannel(f);
 				// block until the server socket is closed.
 				f.channel().closeFuture().sync();
 			} catch (Exception ex) {
@@ -255,20 +263,24 @@ public class Server {
 
 		// start the inbound and outbound manager worker threads
 		ManagementQueue.startup();
-
+		
 		String myId = conf.getServer().getProperty("node.id");
 
 		// create manager for network changes
 		networkMgr = NetworkManager.getInstance(myId);
 
 		// create manager for leader election
+		String portstr = conf.getServer().getProperty("port.mgmt");
+		int mport = Integer.parseInt(portstr);
+
+		ServerBootstrap b = bootstrap.get(mport);
 		String str = conf.getServer().getProperty("node.votes");
 		int votes = 1;
 		if (str != null)
 			votes = Integer.parseInt(str);
 		electionMgr = ElectionManager.getInstance(myId, votes);
 		electionMgr.startElectionByVote();
-
+		
 		// create manager for accepting jobs
 		jobMgr = JobManager.getInstance(myId);
 
@@ -277,6 +289,7 @@ public class Server {
 		for (NodeDesc nn : conf.getNearest().getNearestNodes().values()) {
 			HeartbeatData node = new HeartbeatData(nn.getNodeId(), nn.getHost(), nn.getPort(), nn.getMgmtPort());
 			HeartbeatConnector.getInstance().addConnectToThisNode(node);
+			electionMgr.setChannel(nn.getNodeId(), nn.getHost(), nn.getPort(), nn.getMgmtPort());
 		}
 		heartbeatMgr.start();
 

@@ -73,7 +73,7 @@ public class InboundMgmtWorker extends Thread {
 			try {
 				// block until a message is enqueued
 				ManagementQueueEntry msg = ManagementQueue.inbound.take();
-
+				logger.info("Message recieven in inbound queue");
 				if (logger.isDebugEnabled())
 					logger.debug("Inbound management message received");
 

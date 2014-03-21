@@ -45,7 +45,7 @@ public class OutboundMgmtWorker extends Thread {
 			try {
 				// block until a message is enqueued
 				ManagementQueueEntry msg = ManagementQueue.outbound.take();
-
+				logger.info("Outbound management message received at outbound worker");
 				if (logger.isDebugEnabled())
 					logger.debug("Outbound management message received");
 
@@ -53,18 +53,33 @@ public class OutboundMgmtWorker extends Thread {
 					boolean rtn = false;
 					if (msg.channel != null && msg.channel.isOpen() && msg.channel.isWritable()) {
 						ChannelFuture cf = msg.channel.write(msg);
-
+						
 						// blocks on write - use listener to be async
 						cf.awaitUninterruptibly();
 						rtn = cf.isSuccess();
 						if (!rtn)
+						{
+							logger.info("msg writting to channel failed, putting back to queue");
 							ManagementQueue.outbound.putFirst(msg);
+						}
+						else
+							logger.info("Msg from outbound queue to channel is written successfully");
+					}
+					else
+					{
+						logger.info("something wrong with channel");
 					}
 
 				} else
+				{
+					logger.info("channel is not writable, putting back the message to outbound queue");
 					ManagementQueue.outbound.putFirst(msg);
+				}
 			} catch (InterruptedException ie) {
+			{
+				logger.error("InterruptedException occoured at outbound management worker");
 				break;
+			}
 			} catch (Exception e) {
 				logger.error("Unexpected management communcation failure", e);
 				break;

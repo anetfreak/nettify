@@ -74,6 +74,7 @@ public class ManagementQueue {
 			ManagementQueueEntry entry = new ManagementQueueEntry(reply, ch,
 					null);
 			outbound.put(entry);
+			logger.info("Msg enqueued to outbound queue");
 		} catch (InterruptedException e) {
 			logger.error("message not enqueued for reply", e);
 		}

@@ -87,6 +87,7 @@ public class NetworkManager {
 					//Begin Amit
 					ElectionManager.getInstance().addOutgoingChannel(req.getNodeId(), isa.getHostName(),
 							isa.getPort(), channel, sa);
+					
 					//End Amit
 				}
 			} else

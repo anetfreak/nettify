@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import poke.monitor.MonitorListener;
+import poke.server.management.ManagementQueue;
 
 public class HeartbeatListener implements MonitorListener {
 	protected static Logger logger = LoggerFactory.getLogger("management");
@@ -60,6 +61,7 @@ public class HeartbeatListener implements MonitorListener {
 			data.setLastBeat(System.currentTimeMillis());
 		} else
 			logger.error("Received heartbeatMgr from on wrong channel or unknown host: " + msg.getBeat().getNodeId());
+		ManagementQueue.enqueueRequest(msg, null, null);
 	}
 
 	@Override
