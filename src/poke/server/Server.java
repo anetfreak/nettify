@@ -144,7 +144,10 @@ public class Server {
 				}
 
 				int port = Integer.parseInt(str);
-
+				String ipstr = conf.getServer().getProperty("ip");
+				if (ipstr == null) {
+					ipstr = "localhost";
+				}
 				ServerBootstrap b = new ServerBootstrap();
 				bootstrap.put(port, b);
 
@@ -161,8 +164,8 @@ public class Server {
 				// Start the server.
 				logger.info("Starting server " + conf.getServer().getProperty("node.id") + ", listening on port = "
 						+ port);
-				ChannelFuture f = b.bind(port).syncUninterruptibly();
-
+				//ChannelFuture f = b.bind(port).syncUninterruptibly();
+				ChannelFuture f = b.bind(ipstr,port).syncUninterruptibly();
 				// should use a future channel listener to do this step
 				// allChannels.add(f.channel());
 
