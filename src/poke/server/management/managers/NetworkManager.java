@@ -84,6 +84,10 @@ public class NetworkManager {
 					logger.info("NODEJOIN: " + isa.getHostName() + ", " + isa.getPort());
 					HeartbeatManager.getInstance().addOutgoingChannel(req.getNodeId(), isa.getHostName(),
 							isa.getPort(), channel, sa);
+					//Begin Amit
+					ElectionManager.getInstance().addOutgoingChannel(req.getNodeId(), isa.getHostName(),
+							isa.getPort(), channel, sa);
+					//End Amit
 				}
 			} else
 				logger.warn(req.getNodeId() + " not writable");

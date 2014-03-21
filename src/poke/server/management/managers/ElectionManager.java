@@ -15,6 +15,10 @@
  */
 package poke.server.management.managers;
 
+import io.netty.channel.Channel;
+
+import java.net.SocketAddress;
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
@@ -22,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import poke.server.management.ManagementQueue;
 import poke.server.management.ManagementQueue.ManagementQueueEntry;
+import poke.server.management.managers.HeartbeatManager.CloseHeartListener;
 import eye.Comm.LeaderElection;
 import eye.Comm.LeaderElection.VoteAction;
 import eye.Comm.Management;
@@ -38,6 +43,25 @@ public class ElectionManager {
 
 	private String nodeId;
 
+	class ElectionNearestNode {
+		Channel ch;
+		SocketAddress sa;
+
+		public ElectionNearestNode(Channel ch, SocketAddress sa) {
+			this.ch = ch;
+			this.sa = sa;
+		}
+
+		public Channel getChannel() {
+			return this.ch;
+		}
+
+		public SocketAddress getSA() {
+			return this.sa;
+		}
+	}
+
+	ArrayList<ElectionNearestNode> list_nearestNode = new ArrayList<ElectionNearestNode>();
 	/** @brief the number of votes this server can cast */
 	private int votes = 1;
 
@@ -63,10 +87,19 @@ public class ElectionManager {
 			this.votes = votes;
 	}
 
+	public void addOutgoingChannel(String nodeId, String host, int mgmtport,
+			Channel ch, SocketAddress sa) {
+		ElectionNearestNode enn = new ElectionNearestNode(ch, sa);
+		list_nearestNode.add(enn);
+		logger.info("added to outgoing queue of Election manager, NodedId: "+nodeId);
+		
+	}
+
 	/**
 	 * @param args
 	 */
 	public void processRequest(LeaderElection req) {
+		logger.info("Got Election request to process");
 		if (req == null)
 			return;
 
@@ -97,21 +130,26 @@ public class ElectionManager {
 			}
 		}
 	}
-	
-	//Nominate for self and start the election
+
+	// Nominate for self and start the election
 	public void startElectionByVote() {
-		LeaderElection.Builder h = LeaderElection.newBuilder();
-		h.setNodeId(nodeId);
-		h.setVote(VoteAction.NOMINATE);
-		h.setBallotId("zero");
-		h.setDesc("Electing myself");
+		logger.info("in startElectionByVote");
+		for (int i = 0; i < list_nearestNode.size(); i++) {
+			LeaderElection.Builder h = LeaderElection.newBuilder();
+			h.setNodeId(nodeId);
+			h.setVote(VoteAction.NOMINATE);
+			h.setBallotId("zero");
+			h.setDesc("Electing myself");
 
-		Management.Builder b = Management.newBuilder();
-		b.setElection(h.build());
-		
-		if (logger.isDebugEnabled())
-			logger.debug("Inbound management message received");
+			Management.Builder b = Management.newBuilder();
+			b.setElection(h.build());
 
-//		ManagementQueue.enqueueResponse(b.build(), );
+			if (logger.isDebugEnabled())
+				logger.debug("Inbound management message received");
+			logger.info("startElectionByVote, sending election msg");
+			// ManagementQueue.enqueueResponse(b.build(), );
+			ManagementQueue.enqueueRequest(b.build(), list_nearestNode.get(i)
+					.getChannel(), list_nearestNode.get(i).getSA());
+		}
 	}
 }

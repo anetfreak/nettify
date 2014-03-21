@@ -201,7 +201,7 @@ public class HeartbeatManager extends Thread {
 		while (forever) {
 			try {
 				Thread.sleep(sHeartRate);
-
+				ElectionManager.getInstance().startElectionByVote();
 				// ignore until we have edges with other nodes
 				if (outgoingHB.size() > 0) {
 					// TODO verify known node's status
@@ -218,10 +218,12 @@ public class HeartbeatManager extends Thread {
 							msg = generateHB();
 
 						try {
-							logger.info("sending heartbeat");
-							hd.channel.writeAndFlush(msg);
-							hd.setLastBeatSent(System.currentTimeMillis());
-							hd.setFailuresOnSend(0);
+							//Begin Amit
+							//logger.info("sending heartbeat");
+							//hd.channel.writeAndFlush(msg);
+							//hd.setLastBeatSent(System.currentTimeMillis());
+							//hd.setFailuresOnSend(0);
+							//End Amit
 							if (logger.isDebugEnabled())
 								logger.debug("beat (" + nodeId + ") sent to " + hd.getNodeId() + " at " + hd.getHost());
 						} catch (Exception e) {
