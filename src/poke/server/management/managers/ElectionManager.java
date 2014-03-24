@@ -71,14 +71,15 @@ public class ElectionManager {
 			this.port = port;
 			this.mgmtPort = mgmtPort;
 		}
-		public void setChannel(Channel ch)
-		{
+
+		public void setChannel(Channel ch) {
 			this.ch = ch;
 		}
-		public void setSocket(SocketAddress sa)
-		{
+
+		public void setSocket(SocketAddress sa) {
 			this.sa = sa;
 		}
+
 		public Channel getChannel() {
 			return this.ch;
 		}
@@ -107,6 +108,15 @@ public class ElectionManager {
 	ArrayList<ElectionNearestNode> list_nearestNode = new ArrayList<ElectionNearestNode>();
 	/** @brief the number of votes this server can cast */
 	private int votes = 1;
+	private VoteAction status = VoteAction.ELECTION;
+
+	public void setStatus(VoteAction status) {
+		this.status = status;
+	}
+
+	public VoteAction getStatus() {
+		return this.status;
+	}
 
 	public static ElectionManager getInstance(String id, int votes) {
 		instance.compareAndSet(null, new ElectionManager(id, votes));
@@ -136,51 +146,50 @@ public class ElectionManager {
 		// logger.info("adding channel in EL");
 		// ElectionNearestNode enn = new ElectionNearestNode(ch, sa);
 		// list_nearestNode.add(enn);
-		logger.info("in addOutgoing Channel , NodeId: "+ nodeId);
+		logger.info("in addOutgoing Channel , NodeId: " + nodeId);
 		for (int i = 0; i < list_nearestNode.size(); i++) {
-			//if (list_nearestNode.get(i).getNodeId().equals(nodeId)) {
+			// if (list_nearestNode.get(i).getNodeId().equals(nodeId)) {
 
-				Bootstrap b = new Bootstrap();
-				EventLoopGroup group = new NioEventLoopGroup();
-				ChannelFuture channel;
-				// @TODO newFixedThreadPool(2);
-				boolean compressComm = false;
-				b.group(group).channel(NioSocketChannel.class)
-						.handler(new ManagementInitializer(compressComm));
-				b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000);
-				b.option(ChannelOption.TCP_NODELAY, true);
-				b.option(ChannelOption.SO_KEEPALIVE, true);
-				// boolean compressComm = false;
-				// b.(new ManagementInitializer(compressComm));
+			Bootstrap b = new Bootstrap();
+			EventLoopGroup group = new NioEventLoopGroup();
+			ChannelFuture channel;
+			// @TODO newFixedThreadPool(2);
+			boolean compressComm = false;
+			b.group(group).channel(NioSocketChannel.class)
+					.handler(new ManagementInitializer(compressComm));
+			b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000);
+			b.option(ChannelOption.TCP_NODELAY, true);
+			b.option(ChannelOption.SO_KEEPALIVE, true);
+			// boolean compressComm = false;
+			// b.(new ManagementInitializer(compressComm));
 
-				// Make the connection attempt.
-				logger.info("channel connecting to host " + host + " port: "
-						+ mgmtport);
-				channel = b.connect(list_nearestNode.get(i).getHost(),
-						list_nearestNode.get(i).getMgmtPort())
-						.syncUninterruptibly();
-				channel.awaitUninterruptibly(5000l);
-				channel.channel()
-						.closeFuture()
-						.addListener(
-								new CloseChannelListener(list_nearestNode
-										.get(i).getNodeId()));
-				cf = channel;
-				if (cf != null)
-					if (channel.channel().isOpen())
-						logger.info("Channel is created and is open");
-					else
-					{
-						logger.info("Channel is not open");
-						return;
-					}
-				// ElectionNearestNode enn = new ElectionNearestNode(ch, sa);
-				// list_nearestNode.add(enn);
-				// ch.closeFuture().addListener(new CloseChannelListener(enn));
-				logger.info("added to outgoing queue of Election manager, NodedId: "
-						+ nodeId);
-				list_nearestNode.get(i).setChannel(cf.channel());
-			//}
+			// Make the connection attempt.
+			logger.info("channel connecting to host " + host + " port: "
+					+ mgmtport);
+			channel = b.connect(list_nearestNode.get(i).getHost(),
+					list_nearestNode.get(i).getMgmtPort())
+					.syncUninterruptibly();
+			channel.awaitUninterruptibly(5000l);
+			channel.channel()
+					.closeFuture()
+					.addListener(
+							new CloseChannelListener(list_nearestNode.get(i)
+									.getNodeId()));
+			cf = channel;
+			if (cf != null)
+				if (channel.channel().isOpen())
+					logger.info("Channel is created and is open");
+				else {
+					logger.info("Channel is not open");
+					return;
+				}
+			// ElectionNearestNode enn = new ElectionNearestNode(ch, sa);
+			// list_nearestNode.add(enn);
+			// ch.closeFuture().addListener(new CloseChannelListener(enn));
+			logger.info("added to outgoing queue of Election manager, NodedId: "
+					+ nodeId);
+			list_nearestNode.get(i).setChannel(cf.channel());
+			// }
 		}
 	}
 
@@ -205,32 +214,61 @@ public class ElectionManager {
 
 		if (req.getVote().getNumber() == VoteAction.ELECTION_VALUE) {
 			// an election is declared!
-			logger.info("an election is declared");
+			setStatus(VoteAction.ELECTION);
+			logger.info("an election is declared by node " + req.getNodeId());
 		} else if (req.getVote().getNumber() == VoteAction.DECLAREVOID_VALUE) {
 			// no one was elected, I am dropping into standby mode`
 			logger.info("no one was elected, I am dropping into standby mode");
 		} else if (req.getVote().getNumber() == VoteAction.DECLAREWINNER_VALUE) {
 			// some node declared them self the leader
-			logger.info("some node declared them self the leader");
+			setStatus(VoteAction.DECLAREWINNER);
+			logger.info("node "+ req.getNodeId() +" declared them self the leader");
 		} else if (req.getVote().getNumber() == VoteAction.ABSTAIN_VALUE) {
 			// for some reason, I decline to vote
+			setStatus(VoteAction.ABSTAIN);
 			logger.info("for some reason, I decline to vote");
 		} else if (req.getVote().getNumber() == VoteAction.NOMINATE_VALUE) {
+			setStatus(VoteAction.NOMINATE);
 			logger.info("in Nominate Value, checking the node id : "
 					+ req.getNodeId());
 			int comparedToMe = req.getNodeId().compareTo(nodeId);
 			if (comparedToMe <= -1) {
 				// Someone else has a higher priority, forward nomination
 				logger.info("Someone else has a higher priority, forward nomination");
+				createAndSend(req.getNodeId(),req.getVote(),req.getBallotId(),req.getDesc());
 				// TODO forward
 			} else if (comparedToMe >= 1) {
 				// I have a higher priority, nominate myself
 				logger.info("I have a higher priority, nominate myself");
+				createAndSend(nodeId,VoteAction.NOMINATE,nodeId,"Nominating myself");
 				// TODO nominate myself
 			} else {
-				logger.info("I am the node");
+				logger.info("I am the node, Declaring myself as the winner!! Hurrrrey!! :) OCG");
+				createAndSend(nodeId, VoteAction.DECLAREWINNER, nodeId, "I am the winner");
+				setStatus(VoteAction.DECLAREWINNER);
 			}
 		}
+	}
+
+	public boolean createAndSend(String lnodeId, VoteAction vote,
+			String ballotId, String desc) {
+		for (int i = 0; i < list_nearestNode.size(); i++) {
+			logger.info("There is nearest node, send EL");
+			if (list_nearestNode.get(i).getChannel() != null) {
+
+				LeaderElection.Builder h = LeaderElection.newBuilder();
+				h.setNodeId(lnodeId);
+				h.setVote(vote);
+				h.setBallotId(ballotId);
+				h.setDesc(desc);
+
+				Management.Builder b = Management.newBuilder();
+				b.setElection(h.build());
+				list_nearestNode.get(i).getChannel().writeAndFlush(b.build());
+			}
+		}
+		return true;
+
 	}
 
 	// Nominate for self and start the election
@@ -238,13 +276,12 @@ public class ElectionManager {
 		logger.info("in startElectionByVote");
 		for (int i = 0; i < list_nearestNode.size(); i++) {
 			logger.info("There is nearest node, send EL");
-			if(list_nearestNode.get(i).getChannel() != null)
-			{
+			if (list_nearestNode.get(i).getChannel() != null) {
 				LeaderElection.Builder h = LeaderElection.newBuilder();
 				h.setNodeId(nodeId);
 				h.setVote(VoteAction.NOMINATE);
 				h.setBallotId(nodeId);
-				h.setDesc("Electing myself");
+				h.setDesc("Nominating myself");
 
 				Management.Builder b = Management.newBuilder();
 				b.setElection(h.build());
@@ -252,18 +289,20 @@ public class ElectionManager {
 				if (logger.isDebugEnabled())
 					logger.debug("Inbound management message received");
 				logger.info("startElectionByVote, sending election msg");
-			// ManagementQueue.enqueueResponse(b.build(), );
-			// ManagementQueue.enqueueRequest(b.build(), list_nearestNode.get(i)
-			// .getChannel(), list_nearestNode.get(i).getSA());
+				// ManagementQueue.enqueueResponse(b.build(), );
+				// ManagementQueue.enqueueRequest(b.build(),
+				// list_nearestNode.get(i)
+				// .getChannel(), list_nearestNode.get(i).getSA());
 
-			// ManagementQueue.enqueueResponse(b.build(),
-			// list_nearestNode.get(i).getChannel());
-			//if (cf != null) {
-				//logger.info("cf is not null, enqueue msg");
+				// ManagementQueue.enqueueResponse(b.build(),
+				// list_nearestNode.get(i).getChannel());
+				// if (cf != null) {
+				// logger.info("cf is not null, enqueue msg");
 				list_nearestNode.get(i).getChannel().writeAndFlush(b.build());
-				// ManagementQueue.enqueueResponse(b.build(), cf.channel());
+				// ManagementQueue.enqueueResponse(b.build(),
+				// list_nearestNode.get(i).getChannel());
 			}
-			
+
 		}
 	}
 
@@ -272,7 +311,8 @@ public class ElectionManager {
 		ElectionNearestNode enn = new ElectionNearestNode(null, null, nodeId,
 				host, port, mgmtPort);
 		logger.info("Adding to nearest node List:");
-		logger.info("NodeId: " + nodeId + "host: " + host + "port: " + port + "MgmtPort: "+ mgmtPort);
+		logger.info("NodeId: " + nodeId + "host: " + host + "port: " + port
+				+ "MgmtPort: " + mgmtPort);
 		list_nearestNode.add(enn);
 		// cf = f;
 	}
@@ -292,15 +332,15 @@ public class ElectionManager {
 					list_nearestNode.get(i).setSocket(null);
 				}
 			}
-			//if (list_nearestNode.contains(enn)) {
-				//logger.warn("EL_Mgr outgoing channel closing for node");// '" +
-																		// enn.getChannel()
-																		// +
-																		// "' at "
-																		// +
-																		// heart.getHost());
-				// list_nearestNode.remove(enn);
-			
+			// if (list_nearestNode.contains(enn)) {
+			// logger.warn("EL_Mgr outgoing channel closing for node");// '" +
+			// enn.getChannel()
+			// +
+			// "' at "
+			// +
+			// heart.getHost());
+			// list_nearestNode.remove(enn);
+
 			// else if (incomingHB.containsValue(heart)) {
 			// logger.warn("HB incoming channel closing for node '" +
 			// heart.getNodeId() + "' at " + heart.getHost());

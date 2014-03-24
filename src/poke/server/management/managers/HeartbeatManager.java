@@ -33,6 +33,7 @@ import poke.server.management.managers.HeartbeatData.BeatStatus;
 import com.google.protobuf.GeneratedMessage;
 
 import eye.Comm.Heartbeat;
+import eye.Comm.LeaderElection.VoteAction;
 import eye.Comm.Management;
 
 /**
@@ -201,7 +202,8 @@ public class HeartbeatManager extends Thread {
 		while (forever) {
 			try {
 				Thread.sleep(sHeartRate);
-				ElectionManager.getInstance().startElectionByVote();
+				if(ElectionManager.getInstance().getStatus() == VoteAction.ELECTION)
+					ElectionManager.getInstance().startElectionByVote();
 				// ignore until we have edges with other nodes
 				if (outgoingHB.size() > 0) {
 					// TODO verify known node's status
