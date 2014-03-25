@@ -177,7 +177,13 @@ public class ElectionManager {
 				cf = channel;
 				if (cf != null)
 					if (channel.channel().isOpen())
+					{	if(channel.channel().isWritable())
+						list_nearestNode.get(i).setChannel(cf.channel());
+						logger.info("added to outgoing queue of Election manager, NodedId: "
+								+ nodeId);
+						
 						logger.info("Channel is created and is open");
+					}
 					else {
 						logger.info("Channel is not open");
 						return;
@@ -185,9 +191,7 @@ public class ElectionManager {
 				// ElectionNearestNode enn = new ElectionNearestNode(ch, sa);
 				// list_nearestNode.add(enn);
 				// ch.closeFuture().addListener(new CloseChannelListener(enn));
-				logger.info("added to outgoing queue of Election manager, NodedId: "
-						+ nodeId);
-				list_nearestNode.get(i).setChannel(cf.channel());
+				
 				// }
 
 			}
@@ -334,7 +338,9 @@ public class ElectionManager {
 		@Override
 		public void operationComplete(ChannelFuture future) throws Exception {
 			for (int i = 0; i < list_nearestNode.size(); i++) {
+				logger.info("Channle closing with node id: " + nodeId + "  " + list_nearestNode.get(i).getNodeId());
 				if (list_nearestNode.get(i).getNodeId().equals(nodeId)) {
+					logger.info("OK fine");
 					list_nearestNode.get(i).setChannel(null);
 					list_nearestNode.get(i).setSocket(null);
 				}
