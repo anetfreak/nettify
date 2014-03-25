@@ -34,7 +34,7 @@ public class Route {
 	}
 
 	public void run() {
-		ClientCommand cc = new ClientCommand("192.168.0.22", 5571);
+		ClientCommand cc = new ClientCommand("192.168.0.23", 5573);
 		CommListener listener = new ClientPrintListener("jab demo");
 		cc.addListener(listener);
 		

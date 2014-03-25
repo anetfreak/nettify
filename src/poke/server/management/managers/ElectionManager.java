@@ -140,8 +140,7 @@ public class ElectionManager {
 			this.votes = votes;
 	}
 
-	public void addOutgoingChannel(String nodeId, String host, int mgmtport,
-			Channel ch, SocketAddress sa) {
+	public void addOutgoingChannel() {
 
 		// logger.info("adding channel in EL");
 		// ElectionNearestNode enn = new ElectionNearestNode(ch, sa);
@@ -149,47 +148,49 @@ public class ElectionManager {
 		logger.info("in addOutgoing Channel , NodeId: " + nodeId);
 		for (int i = 0; i < list_nearestNode.size(); i++) {
 			// if (list_nearestNode.get(i).getNodeId().equals(nodeId)) {
+			if (list_nearestNode.get(i).getChannel() == null) {
+				Bootstrap b = new Bootstrap();
+				EventLoopGroup group = new NioEventLoopGroup();
+				ChannelFuture channel;
+				// @TODO newFixedThreadPool(2);
+				boolean compressComm = false;
+				b.group(group).channel(NioSocketChannel.class)
+						.handler(new ManagementInitializer(compressComm));
+				b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000);
+				b.option(ChannelOption.TCP_NODELAY, true);
+				b.option(ChannelOption.SO_KEEPALIVE, true);
+				// boolean compressComm = false;
+				// b.(new ManagementInitializer(compressComm));
 
-			Bootstrap b = new Bootstrap();
-			EventLoopGroup group = new NioEventLoopGroup();
-			ChannelFuture channel;
-			// @TODO newFixedThreadPool(2);
-			boolean compressComm = false;
-			b.group(group).channel(NioSocketChannel.class)
-					.handler(new ManagementInitializer(compressComm));
-			b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000);
-			b.option(ChannelOption.TCP_NODELAY, true);
-			b.option(ChannelOption.SO_KEEPALIVE, true);
-			// boolean compressComm = false;
-			// b.(new ManagementInitializer(compressComm));
+				// Make the connection attempt.
+				// logger.info("channel connecting to host " + host + " port: "
+				// + mgmtport);
+				channel = b.connect(list_nearestNode.get(i).getHost(),
+						list_nearestNode.get(i).getMgmtPort())
+						.syncUninterruptibly();
+				channel.awaitUninterruptibly(5000l);
+				channel.channel()
+						.closeFuture()
+						.addListener(
+								new CloseChannelListener(list_nearestNode
+										.get(i).getNodeId()));
+				cf = channel;
+				if (cf != null)
+					if (channel.channel().isOpen())
+						logger.info("Channel is created and is open");
+					else {
+						logger.info("Channel is not open");
+						return;
+					}
+				// ElectionNearestNode enn = new ElectionNearestNode(ch, sa);
+				// list_nearestNode.add(enn);
+				// ch.closeFuture().addListener(new CloseChannelListener(enn));
+				logger.info("added to outgoing queue of Election manager, NodedId: "
+						+ nodeId);
+				list_nearestNode.get(i).setChannel(cf.channel());
+				// }
 
-			// Make the connection attempt.
-			logger.info("channel connecting to host " + host + " port: "
-					+ mgmtport);
-			channel = b.connect(list_nearestNode.get(i).getHost(),
-					list_nearestNode.get(i).getMgmtPort())
-					.syncUninterruptibly();
-			channel.awaitUninterruptibly(5000l);
-			channel.channel()
-					.closeFuture()
-					.addListener(
-							new CloseChannelListener(list_nearestNode.get(i)
-									.getNodeId()));
-			cf = channel;
-			if (cf != null)
-				if (channel.channel().isOpen())
-					logger.info("Channel is created and is open");
-				else {
-					logger.info("Channel is not open");
-					return;
-				}
-			// ElectionNearestNode enn = new ElectionNearestNode(ch, sa);
-			// list_nearestNode.add(enn);
-			// ch.closeFuture().addListener(new CloseChannelListener(enn));
-			logger.info("added to outgoing queue of Election manager, NodedId: "
-					+ nodeId);
-			list_nearestNode.get(i).setChannel(cf.channel());
-			// }
+			}
 		}
 	}
 
@@ -222,7 +223,8 @@ public class ElectionManager {
 		} else if (req.getVote().getNumber() == VoteAction.DECLAREWINNER_VALUE) {
 			// some node declared them self the leader
 			setStatus(VoteAction.DECLAREWINNER);
-			logger.info("node "+ req.getNodeId() +" declared them self the leader");
+			logger.info("node " + req.getNodeId()
+					+ " declared them self the leader");
 		} else if (req.getVote().getNumber() == VoteAction.ABSTAIN_VALUE) {
 			// for some reason, I decline to vote
 			setStatus(VoteAction.ABSTAIN);
@@ -235,16 +237,19 @@ public class ElectionManager {
 			if (comparedToMe <= -1) {
 				// Someone else has a higher priority, forward nomination
 				logger.info("Someone else has a higher priority, forward nomination");
-				createAndSend(req.getNodeId(),req.getVote(),req.getBallotId(),req.getDesc());
+				createAndSend(req.getNodeId(), req.getVote(),
+						req.getBallotId(), req.getDesc());
 				// TODO forward
 			} else if (comparedToMe >= 1) {
 				// I have a higher priority, nominate myself
 				logger.info("I have a higher priority, nominate myself");
-				createAndSend(nodeId,VoteAction.NOMINATE,nodeId,"Nominating myself");
+				createAndSend(nodeId, VoteAction.NOMINATE, nodeId,
+						"Nominating myself");
 				// TODO nominate myself
 			} else {
 				logger.info("I am the node, Declaring myself as the winner!! Hurrrrey!! :) OCG");
-				createAndSend(nodeId, VoteAction.DECLAREWINNER, nodeId, "I am the winner");
+				createAndSend(nodeId, VoteAction.DECLAREWINNER, nodeId,
+						"I am the winner");
 				setStatus(VoteAction.DECLAREWINNER);
 			}
 		}

@@ -202,6 +202,7 @@ public class HeartbeatManager extends Thread {
 		while (forever) {
 			try {
 				Thread.sleep(sHeartRate);
+				ElectionManager.getInstance().addOutgoingChannel();
 				if(ElectionManager.getInstance().getStatus() == VoteAction.ELECTION)
 					ElectionManager.getInstance().startElectionByVote();
 				// ignore until we have edges with other nodes
