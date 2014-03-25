@@ -50,7 +50,10 @@ public class ClientCommand {
 	}
 
 	private void init() {
+		System.out.println("In ClientCommand Init (Host:"+host+"  Port:"+port+")");
 		comm = new CommConnection(host, port);
+		if(comm == null)
+			System.out.println("Comm is null");
 	}
 
 	/**
@@ -92,6 +95,7 @@ public class ClientCommand {
 		eye.Comm.Request req = r.build();
 
 		try {
+			//comm.channel.channel().writeAndFlush(req);
 			comm.sendMessage(req);
 		} catch (Exception e) {
 			logger.warn("Unable to deliver message, queuing");

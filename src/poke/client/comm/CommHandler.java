@@ -36,7 +36,12 @@ public class CommHandler extends SimpleChannelInboundHandler<eye.Comm.Request> {
 
 	public CommHandler() {
 	}
-
+	public void setChannel(Channel channel)
+	{
+		this.channel =channel;
+	}
+	
+	
 	/**
 	 * messages pass through this method. We use a blackbox design as much as
 	 * possible to ensure we can replace the underlining communication without
@@ -48,11 +53,19 @@ public class CommHandler extends SimpleChannelInboundHandler<eye.Comm.Request> {
 	public boolean send(GeneratedMessage msg) {
 		// TODO a queue is needed to prevent overloading of the socket
 		// connection. For the demonstration, we don't need it
-		ChannelFuture cf = channel.write(msg);
-		if (cf.isDone() && !cf.isSuccess()) {
-			logger.error("failed to poke!");
-			return false;
+		if(channel != null)
+		{
+			
+			ChannelFuture cf = channel.writeAndFlush(msg);
+			cf.awaitUninterruptibly();
+			System.out.println("In send ** Channel Handler** success");
+			if (cf.isDone() && !cf.isSuccess()) {
+				logger.error("failed to poke!");
+				return false;
+			}
 		}
+		else
+			System.out.println("Channel is null");
 
 		return true;
 	}
@@ -86,12 +99,13 @@ public class CommHandler extends SimpleChannelInboundHandler<eye.Comm.Request> {
 	 */
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, eye.Comm.Request msg) throws Exception {
+		System.out.println("ctx.channel().pipeline().toString()");
 		for (String id : listeners.keySet()) {
 			CommListener cl = listeners.get(id);
 
 			// TODO this may need to be delegated to a thread pool to allow
 			// async processing of replies
-			cl.onMessage(msg);
+			//cl.onMessage(msg);
 		}
 	}
 }

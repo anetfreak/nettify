@@ -159,13 +159,15 @@ public class Server {
 				// b.option(ChannelOption.MESSAGE_SIZE_ESTIMATOR);
 
 				boolean compressComm = false;
-				b.childHandler(new ServerInitializer(compressComm));
+				ServerInitializer si = new ServerInitializer(compressComm);
+				b.childHandler(si);
 
 				// Start the server.
 				logger.info("Starting server " + conf.getServer().getProperty("node.id") + ", listening on port = "
 						+ port);
 				//ChannelFuture f = b.bind(port).syncUninterruptibly();
 				ChannelFuture f = b.bind(ipstr,port).syncUninterruptibly();
+				//si.initChannel(f.channel());
 				// should use a future channel listener to do this step
 				// allChannels.add(f.channel());
 

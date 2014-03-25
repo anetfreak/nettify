@@ -52,6 +52,7 @@ public class ResourceFactory {
 		try {
 			ResourceFactory.cfg = cfg;
 			factory.compareAndSet(null, new ResourceFactory());
+			System.out.println("addded rf in factory");
 		} catch (Exception e) {
 			logger.error("failed to initialize ResourceFactory", e);
 		}
@@ -87,11 +88,14 @@ public class ResourceFactory {
 
 		ResourceConf rc = cfg.findById(header.getRoutingId().getNumber());
 		if (rc == null)
+		{
+			System.out.println("rc is null");
 			return null;
-
+		}
 		try {
 			// strategy: instance-per-request
 			Resource rsc = (Resource) Beans.instantiate(this.getClass().getClassLoader(), rc.getClazz());
+			System.out.println("Returning rsc");
 			return rsc;
 		} catch (Exception e) {
 			logger.error("unable to create resource " + rc.getClazz());

@@ -20,14 +20,21 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.codec.LengthFieldPrepender;
+import io.netty.handler.codec.protobuf.ProtobufDecoder;
+import io.netty.handler.codec.protobuf.ProtobufEncoder;
 
 import java.util.concurrent.LinkedBlockingDeque;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import poke.server.ServerHandler;
 
 import com.google.protobuf.GeneratedMessage;
 
@@ -44,10 +51,10 @@ public class CommConnection {
 
 	private String host;
 	private int port;
-	private ChannelFuture channel; // do not use directly call connect()!
+	public ChannelFuture channel; // do not use directly call connect()!
 	private EventLoopGroup group;
 	private CommHandler handler;
-
+	
 	// our surge protection using a in-memory cache for messages
 	private LinkedBlockingDeque<com.google.protobuf.GeneratedMessage> outbound;
 
@@ -118,10 +125,25 @@ public class CommConnection {
 
 			// Make the connection attempt.
 			channel = b.connect(host, port).syncUninterruptibly();
+			channel.awaitUninterruptibly(5000l);
+			if(channel == null)
+				System.out.println("Channel is null, not able to connect to Host: "+host+"  Port: "+port);
+			else
+				System.out.println("Channel created, not null");
 
+			//setting pipeline parameters
+			ChannelPipeline pipeline = channel.channel().pipeline();
+			pipeline.addLast("frameDecoder", new LengthFieldBasedFrameDecoder(67108864, 0, 4, 0, 4));
+			pipeline.addLast("protobufDecoder", new ProtobufDecoder(eye.Comm.Request.getDefaultInstance()));
+			pipeline.addLast("frameEncoder", new LengthFieldPrepender(4));
+			pipeline.addLast("protobufEncoder", new ProtobufEncoder());
+			pipeline.addLast("handler", new ServerHandler());
+
+			
 			// want to monitor the connection to the server s.t. if we loose the
 			// connection, we can try to re-establish it.
 			ClientClosedListener ccl = new ClientClosedListener(this);
+			handler.setChannel(channel.channel());
 			channel.channel().closeFuture().addListener(ccl);
 
 		} catch (Exception ex) {
@@ -146,7 +168,10 @@ public class CommConnection {
 		}
 
 		if (channel.isDone() && channel.isSuccess())
+		{
+			System.out.println("Channel is success");
 			return channel.channel();
+		}
 		else
 			throw new RuntimeException("Not able to establish connection to server");
 	}
@@ -176,7 +201,6 @@ public class CommConnection {
 				CommConnection.logger.error("connection missing, no outbound communication");
 				return;
 			}
-
 			while (true) {
 				if (!forever && conn.outbound.size() == 0)
 					break;
@@ -184,12 +208,27 @@ public class CommConnection {
 				try {
 					// block until a message is enqueued
 					GeneratedMessage msg = conn.outbound.take();
+					//System.out.println("Message received");
 					if (ch.isWritable()) {
 						CommHandler handler = conn.connect().pipeline().get(CommHandler.class);
-
-						if (!handler.send(msg))
-							conn.outbound.putFirst(msg);
-
+						handler.setChannel(ch);
+						//if(channel.isDone()&&channel.isSuccess())
+							//System.out.println("channel ok");
+						//ChannelFuture cf = ch.writeAndFlush(msg);
+//						while(!cf.isSuccess())
+						//cf.awaitUninterruptibly();
+						//ch.flush();
+						//System.out.println("In send ** Channel Handler** success");
+						//if (cf.isDone() && !cf.isSuccess()) {
+							//logger.error("failed to poke!" + cf.isCancelled() + cf.isDone() + cf.isSuccess()+cf.cause() );
+							//return false;
+						//}
+						ch.writeAndFlush(msg);
+						//if (!handler.send(msg))
+						//{
+							//conn.outbound.putFirst(msg);
+							//System.out.println("False..!");
+						//}
 					} else
 						conn.outbound.putFirst(msg);
 				} catch (InterruptedException ie) {
@@ -226,7 +265,7 @@ public class CommConnection {
 		@Override
 		public void operationComplete(ChannelFuture future) throws Exception {
 			// we lost the connection or have shutdown.
-
+			System.out.println("Channel closed");
 			// @TODO if lost, try to re-establish the connection
 		}
 	}

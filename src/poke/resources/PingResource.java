@@ -38,6 +38,7 @@ public class PingResource implements Resource {
 	 */
 	public Request process(Request request) {
 		// TODO add code to process the message/event received
+		
 		logger.info("poke: " + request.getBody().getPing().getTag());
 
 		Request.Builder rb = Request.newBuilder();

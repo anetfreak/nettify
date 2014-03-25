@@ -169,6 +169,7 @@ public class PerChannelQueue implements ChannelQueue {
 		@Override
 		public void run() {
 			Channel conn = sq.channel;
+			logger.info("PerChannel OutBoundWorker started...." + conn.toString() + conn.pipeline().toString());
 			if (conn == null || !conn.isOpen()) {
 				PerChannelQueue.logger.error("connection missing, no outbound communication");
 				return;
@@ -181,16 +182,23 @@ public class PerChannelQueue implements ChannelQueue {
 				try {
 					// block until a message is enqueued
 					GeneratedMessage msg = sq.outbound.take();
+					System.out.println("Got a message at server outbound queue");
 					if (conn.isWritable()) {
 						boolean rtn = false;
 						if (channel != null && channel.isOpen() && channel.isWritable()) {
-							ChannelFuture cf = channel.write(msg);
-
+							ChannelFuture cf = channel.writeAndFlush(msg);
+							cf.addListener(new WriteListener(sq));
+							//ChannelFuture cf = conn.writeAndFlush(msg);
+							System.out.println("Server--sending -- response");
 							// blocks on write - use listener to be async
 							cf.awaitUninterruptibly();
+							System.out.println("Written to channel");
 							rtn = cf.isSuccess();
 							if (!rtn)
+							{	
+								System.out.println("Sending failed " + rtn + "{Reason:"+cf.cause()+"}");
 								sq.outbound.putFirst(msg);
+							}
 						}
 
 					} else
@@ -226,6 +234,7 @@ public class PerChannelQueue implements ChannelQueue {
 		@Override
 		public void run() {
 			Channel conn = sq.channel;
+			logger.info("PerChannel InbondWorker started");
 			if (conn == null || !conn.isOpen()) {
 				PerChannelQueue.logger.error("connection missing, no inbound communication");
 				return;
@@ -238,7 +247,7 @@ public class PerChannelQueue implements ChannelQueue {
 				try {
 					// block until a message is enqueued
 					GeneratedMessage msg = sq.inbound.take();
-
+					logger.info("PerChannel InbondWorker Got a message....");
 					// process request and enqueue response
 					if (msg instanceof Request) {
 						Request req = ((Request) msg);
@@ -273,6 +282,22 @@ public class PerChannelQueue implements ChannelQueue {
 		}
 	}
 
+	public class WriteListener implements ChannelFutureListener {
+		private ChannelQueue sq;
+
+		public WriteListener(ChannelQueue sq) {
+			this.sq = sq;
+		}
+
+		@Override
+		public void operationComplete(ChannelFuture future) throws Exception {
+			logger.info("Write complete");
+			logger.info("isSuccess: " +future.isSuccess());
+			logger.info("Cause: " + future.cause());
+			//sq.shutdown(true);
+		}
+	}
+	
 	public class CloseListener implements ChannelFutureListener {
 		private ChannelQueue sq;
 

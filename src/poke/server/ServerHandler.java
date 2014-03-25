@@ -24,8 +24,16 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.protobuf.GeneratedMessage;
+
+import eye.Comm.PokeStatus;
+import eye.Comm.Request;
+
 import poke.server.queue.ChannelQueue;
 import poke.server.queue.QueueFactory;
+import poke.server.resources.Resource;
+import poke.server.resources.ResourceFactory;
+import poke.server.resources.ResourceUtil;
 
 /**
  * As implemented, this server handler does not share queues or worker threads
@@ -57,14 +65,22 @@ public class ServerHandler extends SimpleChannelInboundHandler<eye.Comm.Request>
 	public void channelRead0(ChannelHandlerContext ctx, eye.Comm.Request req) throws Exception {
 		// processing is deferred to the worker threads
 		logger.info("---> server got a message");
+		
 		queueInstance(ctx.channel()).enqueueRequest(req, ctx.channel());
+		
+
+
+
 	}
 
 	@Override
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 
 	}
-
+	@Override
+    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+        ctx.flush();
+    }
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		logger.error("Unexpected exception from downstream.", cause);
@@ -99,7 +115,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<eye.Comm.Request>
 		public ConnectionClosedListener(ChannelQueue sq) {
 			this.sq = sq;
 		}
-
+		
 		@Override
 		public void operationComplete(ChannelFuture future) throws Exception {
 			// Note re-connecting to clients cannot be initiated by the server

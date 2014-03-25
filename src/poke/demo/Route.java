@@ -34,14 +34,16 @@ public class Route {
 	}
 
 	public void run() {
-		ClientCommand cc = new ClientCommand("localhost", 5570);
+		ClientCommand cc = new ClientCommand("192.168.0.22", 5571);
 		CommListener listener = new ClientPrintListener("jab demo");
 		cc.addListener(listener);
-
-		for (int i = 0; i < 3; i++) {
+		
+		for (int i = 1; i < 2; i++) {
 			count++;
 			cc.poke(tag, count);
 		}
+		
+		
 	}
 
 	public static void main(String[] args) {
@@ -51,8 +53,8 @@ public class Route {
 
 			// we are running asynchronously
 			System.out.println("\nExiting in 5 seconds");
-			Thread.sleep(5000);
-			System.exit(0);
+			Thread.sleep(25000);
+			//System.exit(0);
 
 		} catch (Exception e) {
 			e.printStackTrace();
