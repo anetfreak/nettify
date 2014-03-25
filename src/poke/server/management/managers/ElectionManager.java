@@ -145,7 +145,7 @@ public class ElectionManager {
 		// logger.info("adding channel in EL");
 		// ElectionNearestNode enn = new ElectionNearestNode(ch, sa);
 		// list_nearestNode.add(enn);
-		logger.info("in addOutgoing Channel , NodeId: " + nodeId);
+		//logger.info("in addOutgoing Channel , NodeId: "	);
 		for (int i = 0; i < list_nearestNode.size(); i++) {
 			// if (list_nearestNode.get(i).getNodeId().equals(nodeId)) {
 			if (list_nearestNode.get(i).getChannel() == null) {
@@ -222,6 +222,8 @@ public class ElectionManager {
 			logger.info("no one was elected, I am dropping into standby mode");
 		} else if (req.getVote().getNumber() == VoteAction.DECLAREWINNER_VALUE) {
 			// some node declared them self the leader
+			createAndSend(req.getNodeId(), VoteAction.DECLAREWINNER, req.getNodeId(),
+					"I am the winner");
 			setStatus(VoteAction.DECLAREWINNER);
 			logger.info("node " + req.getNodeId()
 					+ " declared them self the leader");
