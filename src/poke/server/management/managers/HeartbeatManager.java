@@ -222,10 +222,10 @@ public class HeartbeatManager extends Thread {
 
 						try {
 							//Begin Amit
-							//logger.info("sending heartbeat");
-							//hd.channel.writeAndFlush(msg);
-							//hd.setLastBeatSent(System.currentTimeMillis());
-							//hd.setFailuresOnSend(0);
+							logger.info("sending heartbeat");
+							hd.channel.writeAndFlush(msg);
+							hd.setLastBeatSent(System.currentTimeMillis());
+							hd.setFailuresOnSend(0);
 							//End Amit
 							if (logger.isDebugEnabled())
 								logger.debug("beat (" + nodeId + ") sent to " + hd.getNodeId() + " at " + hd.getHost());
