@@ -137,7 +137,7 @@ public class CommConnection {
 			pipeline.addLast("protobufDecoder", new ProtobufDecoder(eye.Comm.Request.getDefaultInstance()));
 			pipeline.addLast("frameEncoder", new LengthFieldPrepender(4));
 			pipeline.addLast("protobufEncoder", new ProtobufEncoder());
-			pipeline.addLast("handler", new ServerHandler());
+			pipeline.addLast("handler", handler);
 
 			
 			// want to monitor the connection to the server s.t. if we loose the

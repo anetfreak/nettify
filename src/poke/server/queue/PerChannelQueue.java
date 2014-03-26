@@ -239,7 +239,6 @@ public class PerChannelQueue implements ChannelQueue {
 				PerChannelQueue.logger.error("connection missing, no inbound communication");
 				return;
 			}
-
 			while (true) {
 				if (!forever && sq.inbound.size() == 0)
 					break;

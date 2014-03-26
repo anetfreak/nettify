@@ -34,11 +34,11 @@ public class Route {
 	}
 
 	public void run() {
-		ClientCommand cc = new ClientCommand("192.168.0.23", 5573);
+		ClientCommand cc = new ClientCommand("192.168.0.21", 5570);
 		CommListener listener = new ClientPrintListener("jab demo");
 		cc.addListener(listener);
 		
-		for (int i = 1; i < 2; i++) {
+		for (int i = 0; i < 3; i++) {
 			count++;
 			cc.poke(tag, count);
 		}
