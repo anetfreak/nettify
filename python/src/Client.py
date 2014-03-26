@@ -1,4 +1,5 @@
 from SocketChannel import SocketChannel, SocketChannelFactory
+from comm_pb2 import Request
 
 class Client():
   def __init__(self):
@@ -8,3 +9,6 @@ class Client():
 	self.channel = self.channelFactory.openChannel(host, port)
 	while self.channel.connected:
 	  print "Channel Connected..."
+	  request = Request()
+	  print request
+	  break

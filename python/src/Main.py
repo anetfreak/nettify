@@ -7,4 +7,5 @@ if __name__ == '__main__':
   else:
     host = sys.argv[1]
     port = int(sys.argv[2])
+    print "Trying to connect to " + host + "..."
     Client().run(host, port)
