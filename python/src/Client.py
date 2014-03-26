@@ -19,4 +19,5 @@ class Client():
 	  job_op.action = 4
 	  
 	  self.channel.write(request.SerializeToString())
-	  
+	  print "Writing " + request.SerializeToString() + " to queue"
+	  continue
