@@ -60,7 +60,10 @@ public class HeartbeatManager extends Thread {
 
 	ConcurrentHashMap<Channel, HeartbeatData> outgoingHB = new ConcurrentHashMap<Channel, HeartbeatData>();
 	ConcurrentHashMap<String, HeartbeatData> incomingHB = new ConcurrentHashMap<String, HeartbeatData>();
-
+	public ConcurrentHashMap<Channel, HeartbeatData> getOutgoingQueue_test()
+	{
+		return this.outgoingHB;
+	}
 	public static HeartbeatManager getInstance(String id) {
 		instance.compareAndSet(null, new HeartbeatManager(id));
 		return instance.get();
@@ -129,6 +132,13 @@ public class HeartbeatManager extends Thread {
 		} else {
 			logger.error("Received a HB connection unknown to the server, node ID = ", nodeId);
 			// TODO actions?
+		}
+	}
+	public void refreshOutgoingChannel()
+	{
+		for (HeartbeatData hd : outgoingHB.values()) {
+			if(!hd.channel.isOpen())
+				hd.channel.close();
 		}
 	}
 
@@ -202,9 +212,14 @@ public class HeartbeatManager extends Thread {
 		while (forever) {
 			try {
 				Thread.sleep(sHeartRate);
-				ElectionManager.getInstance().addOutgoingChannel();
+				refreshOutgoingChannel();
+				//ElectionManager.getInstance().addOutgoingChannel();
 				if(ElectionManager.getInstance().getStatus() == VoteAction.ELECTION)
-					ElectionManager.getInstance().startElectionByVote();
+				{
+					ElectionManager.getInstance().createAndSend_test(nodeId, VoteAction.NOMINATE, nodeId,
+							"Nominating myself");
+					//ElectionManager.getInstance().startElectionByVote();
+				}
 				// ignore until we have edges with other nodes
 				if (outgoingHB.size() > 0) {
 					// TODO verify known node's status
@@ -212,6 +227,9 @@ public class HeartbeatManager extends Thread {
 					// send my status (heartbeatMgr)
 					GeneratedMessage msg = null;
 					for (HeartbeatData hd : outgoingHB.values()) {
+			/*			
+						logger.info("beat (" + nodeId + ") sent to " + hd.getNodeId() + " at " + hd.getHost() + hd.channel.remoteAddress());
+						
 						// if failed sends exceed threshold, stop sending
 						if (hd.getFailuresOnSend() > HeartbeatData.sFailureToSendThresholdDefault)
 							continue;
@@ -234,7 +252,9 @@ public class HeartbeatManager extends Thread {
 							logger.error("Failed " + hd.getFailures() + " times to send HB for " + hd.getNodeId()
 									+ " at " + hd.getHost(), e);
 						}
+					*/	
 					}
+					
 				} else
 					; // logger.info("No nodes to send HB");
 			} catch (InterruptedException ie) {

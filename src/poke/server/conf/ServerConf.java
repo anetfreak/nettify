@@ -64,7 +64,7 @@ public class ServerConf {
 	public void addNearestNode(NodeDesc node) {
 		if (nearest == null)
 			nearest = new NearestConf();
-
+		System.out.println("OK");
 		nearest.add(node);
 	}
 
@@ -167,7 +167,8 @@ public class ServerConf {
 				return;
 			else if (nearest == null)
 				nearest = new TreeMap<String, NodeDesc>();
-
+			//Amit
+			System.out.println("Adding nearest node in conf : " + node.getNodeId());
 			nearest.put(node.getNodeId(), node);
 		}
 

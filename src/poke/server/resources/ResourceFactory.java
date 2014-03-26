@@ -52,7 +52,7 @@ public class ResourceFactory {
 		try {
 			ResourceFactory.cfg = cfg;
 			factory.compareAndSet(null, new ResourceFactory());
-			System.out.println("addded rf in factory");
+			//System.out.println("addded rf in factory");
 		} catch (Exception e) {
 			logger.error("failed to initialize ResourceFactory", e);
 		}

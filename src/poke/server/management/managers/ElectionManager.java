@@ -53,6 +53,7 @@ public class ElectionManager {
 	protected static AtomicReference<ElectionManager> instance = new AtomicReference<ElectionManager>();
 	private ChannelFuture cf;
 	private String nodeId;
+	private String LeaderId;
 
 	class ElectionNearestNode {
 		Channel ch;
@@ -141,7 +142,7 @@ public class ElectionManager {
 	}
 
 	public void addOutgoingChannel() {
-
+/*
 		// logger.info("adding channel in EL");
 		// ElectionNearestNode enn = new ElectionNearestNode(ch, sa);
 		// list_nearestNode.add(enn);
@@ -196,6 +197,7 @@ public class ElectionManager {
 
 			}
 		}
+		*/
 	}
 
 	/**
@@ -216,51 +218,91 @@ public class ElectionManager {
 				return;
 			}
 		}
-
+		
 		if (req.getVote().getNumber() == VoteAction.ELECTION_VALUE) {
 			// an election is declared!
 			setStatus(VoteAction.ELECTION);
 			logger.info("an election is declared by node " + req.getNodeId());
-		} else if (req.getVote().getNumber() == VoteAction.DECLAREVOID_VALUE) {
+		} 
+		else if (req.getVote().getNumber() == VoteAction.DECLAREVOID_VALUE) {
 			// no one was elected, I am dropping into standby mode`
 			logger.info("no one was elected, I am dropping into standby mode");
-		} else if (req.getVote().getNumber() == VoteAction.DECLAREWINNER_VALUE) {
+		} 
+		else if (req.getVote().getNumber() == VoteAction.DECLAREWINNER_VALUE) {
 			// some node declared them self the leader
-			createAndSend(req.getNodeId(), VoteAction.DECLAREWINNER, req.getNodeId(),
-					"I am the winner");
+			LeaderId = req.getBallotId();
+			if(!req.getNodeId().contentEquals(nodeId))
+				createAndSend_test(req.getNodeId(), VoteAction.DECLAREWINNER, req.getBallotId(),"I am the winner");
 			setStatus(VoteAction.DECLAREWINNER);
-			logger.info("node " + req.getNodeId()
-					+ " declared them self the leader");
-		} else if (req.getVote().getNumber() == VoteAction.ABSTAIN_VALUE) {
+			logger.info("node " + req.getBallotId()	+ " declared them self the leader");
+		} 
+		else if (req.getVote().getNumber() == VoteAction.ABSTAIN_VALUE) {
 			// for some reason, I decline to vote
 			setStatus(VoteAction.ABSTAIN);
 			logger.info("for some reason, I decline to vote");
-		} else if (req.getVote().getNumber() == VoteAction.NOMINATE_VALUE) {
+		} 
+		else if (req.getVote().getNumber() == VoteAction.NOMINATE_VALUE) {
+			if(getStatus() == VoteAction.DECLAREWINNER)
+			{
+				createAndSend_test(nodeId, VoteAction.DECLAREWINNER, LeaderId,"I am the winner");
+				return;
+			}
 			setStatus(VoteAction.NOMINATE);
-			logger.info("in Nominate Value, checking the node id : "
-					+ req.getNodeId());
+			logger.info("in Nominate Value, checking the node id : "+ req.getNodeId());
 			int comparedToMe = req.getNodeId().compareTo(nodeId);
 			if (comparedToMe <= -1) {
 				// Someone else has a higher priority, forward nomination
 				logger.info("Someone else has a higher priority, forward nomination");
-				createAndSend(req.getNodeId(), req.getVote(),
-						req.getBallotId(), req.getDesc());
+				createAndSend_test(req.getNodeId(), req.getVote(),req.getBallotId(), req.getDesc());
+				setStatus(VoteAction.NOMINATE);
 				// TODO forward
-			} else if (comparedToMe >= 1) {
+			} 
+			else if (comparedToMe >= 1) {
 				// I have a higher priority, nominate myself
 				logger.info("I have a higher priority, nominate myself");
-				createAndSend(nodeId, VoteAction.NOMINATE, nodeId,
-						"Nominating myself");
+				createAndSend_test(nodeId, VoteAction.NOMINATE, nodeId,"Nominating myself");
+				setStatus(VoteAction.NOMINATE);
 				// TODO nominate myself
-			} else {
+			} 
+			else {
 				logger.info("I am the node, Declaring myself as the winner!! Hurrrrey!! :) OCG");
-				createAndSend(nodeId, VoteAction.DECLAREWINNER, nodeId,
-						"I am the winner");
+				createAndSend_test(req.getNodeId(), VoteAction.DECLAREWINNER, req.getBallotId(),"I am the winner");
+				LeaderId = req.getBallotId();
 				setStatus(VoteAction.DECLAREWINNER);
 			}
 		}
 	}
 
+	public void createAndSend_test(String lnodeId, VoteAction vote,
+			String ballotId, String desc)
+	{
+		
+		for (HeartbeatData hd : HeartbeatManager.getInstance().getOutgoingQueue_test().values()) {
+			logger.info("EL beat (" + nodeId + ") sent to " + hd.getNodeId() + " at " + hd.getHost() + hd.channel.remoteAddress());
+			
+			try{
+			LeaderElection.Builder h = LeaderElection.newBuilder();
+			h.setNodeId(lnodeId);
+			h.setVote(vote);
+			h.setBallotId(ballotId);
+			h.setDesc(desc);
+
+			Management.Builder b = Management.newBuilder();
+			b.setElection(h.build());
+			if(hd.channel.isWritable())
+			{
+				hd.channel.writeAndFlush(b.build());
+			}
+		}catch(Exception e) {
+			//hd.incrementFailuresOnSend();
+			logger.error("Failed  to send  for " + hd.getNodeId()
+					+ " at " + hd.getHost(), e);
+		}
+		
+		}
+		
+	}
+	
 	public boolean createAndSend(String lnodeId, VoteAction vote,
 			String ballotId, String desc) {
 		for (int i = 0; i < list_nearestNode.size(); i++) {

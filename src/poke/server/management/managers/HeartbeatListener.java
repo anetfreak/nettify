@@ -60,7 +60,8 @@ public class HeartbeatListener implements MonitorListener {
 			logger.info("Received HB response from " + msg.getBeat().getNodeId());
 			data.setLastBeat(System.currentTimeMillis());
 		} else
-			logger.error("Received heartbeatMgr from on wrong channel or unknown host: " + msg.getBeat().getNodeId());
+			logger.info("Not a HBMgr, enqueue to Management Queue");
+			//logger.error("Received heartbeatMgr from on wrong channel or unknown host: " + msg.getBeat().getNodeId());
 		ManagementQueue.enqueueRequest(msg, null, null);
 	}
 

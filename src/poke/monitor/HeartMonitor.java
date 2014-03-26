@@ -100,12 +100,16 @@ public class HeartMonitor {
 			logger.error("failed to add listener", e);
 		}
 	}
-
+	public void closeConn()
+	{
+		this.channel.channel().close();
+	}
 	public void release() {
 		logger.warn("HeartMonitor releasing resources");
-
+		//this.channel.channel().close();
 		for (String id : handler.listeners.keySet()) {
 			MonitorListener ml = handler.listeners.get(id);
+			
 			ml.connectionClosed();
 
 			// hold back listeners to re-apply if the connection is
@@ -216,7 +220,10 @@ public class HeartMonitor {
 	public int getPort() {
 		return port;
 	}
-
+	//Amit trying to implement automatic handling on ring
+	public String getNodeId(){
+		return this.whoami;
+	}
 	/**
 	 * for demo application only - this will enter a loop waiting for
 	 * heartbeatMgr messages.

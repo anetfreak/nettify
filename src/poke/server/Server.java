@@ -288,10 +288,13 @@ public class Server {
 
 		// establish nearest nodes and start receiving heartbeats
 		heartbeatMgr = HeartbeatManager.getInstance(myId);
+		HeartbeatConnector.getInstance().setNodeId(myId);
+		logger.info(conf.getNearest().getNearestNodes().keySet().toString());
 		for (NodeDesc nn : conf.getNearest().getNearestNodes().values()) {
 			HeartbeatData node = new HeartbeatData(nn.getNodeId(), nn.getHost(), nn.getPort(), nn.getMgmtPort());
 			HeartbeatConnector.getInstance().addConnectToThisNode(node);
 			electionMgr.setChannel(nn.getNodeId(), nn.getHost(), nn.getPort(), nn.getMgmtPort());
+			System.out.println("$$$$$$$$$$$$$$$$$adding Monitors$$$$$$$$$$$$$$$$$$$$$$$");
 		}
 		heartbeatMgr.start();
 

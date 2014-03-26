@@ -15,6 +15,8 @@
  */
 package poke.server.management.managers;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -32,6 +34,7 @@ import poke.server.management.managers.HeartbeatData.BeatStatus;
  * @author gash
  * 
  */
+
 public class HeartbeatConnector extends Thread {
 	protected static Logger logger = LoggerFactory.getLogger("management");
 	protected static AtomicReference<HeartbeatConnector> instance = new AtomicReference<HeartbeatConnector>();
@@ -39,12 +42,16 @@ public class HeartbeatConnector extends Thread {
 	private ConcurrentLinkedQueue<HeartMonitor> monitors = new ConcurrentLinkedQueue<HeartMonitor>();
 	private int sConnectRate = 2000; // msec
 	private boolean forever = true;
-
+	private String nodeId;
 	public static HeartbeatConnector getInstance() {
 		instance.compareAndSet(null, new HeartbeatConnector());
 		return instance.get();
 	}
-
+	//Amit trying to implement automatic handling on ring
+	public void setNodeId(String nodeId)
+	{
+		this.nodeId = nodeId;
+	}
 	/**
 	 * The connector will only add nodes for connections that this node wants to
 	 * establish. Outbound (we send HB messages to) requests do not come through
@@ -70,7 +77,38 @@ public class HeartbeatConnector extends Thread {
 		// add monitor to the list of adjacent nodes that we track
 		monitors.add(hm);
 	}
-
+	public Integer NodeIdToInt(String nodeId)
+	{
+		Integer i_id = 0;
+		switch(nodeId){
+			case "zero" :
+				i_id = 0; break;
+			case "one" :
+				i_id = 1; break;
+			case "two" :
+				i_id = 2; break;
+			case "three" :
+				i_id =3; break;
+		}
+		return i_id;
+	}
+	public String IntToNodeId(Integer i_Id)
+	{
+		String nodeId = "";
+		switch(i_Id){
+			case 0 :
+				nodeId = "zero"; break;
+			case 1 :
+				nodeId = "one"; break;
+			case 2 :
+				nodeId = "two"; break;
+			case 3 :
+				nodeId = "three"; break;
+		}
+		return nodeId;
+	}
+			
+	
 	@Override
 	public void run() {
 		if (monitors.size() == 0) {
@@ -78,22 +116,93 @@ public class HeartbeatConnector extends Thread {
 			return;
 		} else
 			logger.info("HB connection monitor starting, node has " + monitors.size() + " connections");
-
+		
+		//Amit trying to implement automatic handling on ring
+		Map<Integer,HeartMonitor> map_monitors = new HashMap<Integer,HeartMonitor>();
+		Integer currentNode = (NodeIdToInt(this.nodeId)+1)%4;
+		for (HeartMonitor hb : monitors) {
+			System.out.println("Adding monitor to map id: "+NodeIdToInt(hb.getNodeId()));
+			map_monitors.put(NodeIdToInt(hb.getNodeId()), hb);
+		}
+		
 		while (forever) {
 			try {
 				Thread.sleep(sConnectRate);
 
 				// try to establish connections to our nearest nodes
-				for (HeartMonitor hb : monitors) {
+				//Amit trying to implement automatic handling on ring
+				//for (HeartMonitor hb : monitors) {
+				for(int i = 0;i<=3;i++){
+					Integer nextNode = (NodeIdToInt(this.nodeId) + 1 + i)%4;
+					if(nextNode == NodeIdToInt(this.nodeId))
+						continue;
+					HeartMonitor hb = map_monitors.get(nextNode);
 					if (!hb.isConnected()) {
 						try {
-							logger.info("attempting to connect to node: " + hb.getNodeInfo());
-							hb.startHeartbeat();
+							for(int j =0;j<5;j++)
+							{
+								logger.info("attempting to connect to node: " + hb.getNodeInfo());
+								hb.startHeartbeat();
+								Thread.sleep(sConnectRate);
+								if(hb.isConnected())
+								{
+									logger.info("Connected to node :"+hb.getNodeInfo());
+									
+									if(currentNode != nextNode && currentNode != NodeIdToInt(nodeId))
+									{	logger.info("1. Switching from "+ currentNode + " ==> "+nextNode);
+										logger.info("Disconnecting from Node: " + map_monitors.get(currentNode).getNodeInfo());
+										if(map_monitors.get(currentNode).isConnected())
+											map_monitors.get(currentNode).closeConn(); 
+										currentNode = nextNode;
+										logger.info("Now Current Node is " + currentNode);
+									}
+									break;
+								}
+									
+							}
+							if(hb.isConnected())
+							{
+								if(currentNode != nextNode && currentNode != NodeIdToInt(nodeId))
+								{
+									
+									logger.info("Connected to node outside loop :"+hb.getNodeInfo());
+									logger.info("2. Switching from "+currentNode + " ==> "+nextNode);
+									if(map_monitors.get(currentNode).isConnected())
+										map_monitors.get(currentNode).closeConn();
+									currentNode = nextNode;
+								}
+								break;
+							}
+							
 						} catch (Exception ie) {
-							// do nothing
+							logger.error("Exception: HeartBeatConnecton",ie);
+						}
+					}
+					else
+					{
+						if(currentNode != nextNode && currentNode != NodeIdToInt(nodeId))
+						{
+							logger.info("3. Switching from "+currentNode + " ==> "+nextNode);
+							if(map_monitors.get(currentNode).isConnected())
+								map_monitors.get(currentNode).closeConn();
+							currentNode = nextNode;
+						}
+						break;
+					}
+				}
+				
+				for(int k = 0;k<=3;k++){
+					if(k != NodeIdToInt(nodeId) && k != currentNode)
+					{
+						HeartMonitor hb = map_monitors.get(k);
+						if(hb.isConnected())
+						{
+							logger.info("Disconnecting from Node: " + hb.getNodeInfo());
+							hb.closeConn();
 						}
 					}
 				}
+				
 			} catch (InterruptedException e) {
 				logger.error("Unexpected HB connector failure", e);
 				break;
