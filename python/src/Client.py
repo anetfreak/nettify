@@ -8,23 +8,42 @@ from io.netty.channel import ChannelInboundHandlerAdapter, ChannelInitializer, C
 from io.netty.channel.nio import NioEventLoopGroup
 from io.netty.channel.socket.nio import NioSocketChannel
 from io.netty.handler.ssl import SslHandler
+
 class Client():
-  def __init__(self):
-    self.channelFactory = SocketChannelFactory()
-	
+#  def __init__(self):
+#    self.channelFactory = SocketChannelFactory()
+#	
+#  def run(self, host, port):
+#	self.channel = self.channelFactory.openChannel(host, port)
+#	while self.channel.connected:
+#	  print "Channel Connected..."
+#	  request = Request()
+#	  header = request.header
+#	  body = request.body
+#	  
+#	  header.routing_id = 4
+#	  header.originator = "zero"
+#	  job_op = body.job_op
+#	  job_op.action = 4
+#	  
+#	  self.channel.write(request.SerializeToString())
+#	  print "Writing " + request.SerializeToString() + " to queue"
+#	  continue
+
   def run(self, host, port):
-	self.channel = self.channelFactory.openChannel(host, port)
-	while self.channel.connected:
-	  print "Channel Connected..."
-	  request = Request()
-	  header = request.header
-	  body = request.body
-	  
-	  header.routing_id = 4
-	  header.originator = "zero"
-	  job_op = body.job_op
-	  job_op.action = 4
-	  
-	  self.channel.write(request.SerializeToString())
-	  print "Writing " + request.SerializeToString() + " to queue"
-	  continue
+  
+    request = Request()
+    header = request.header
+    body = request.body	  
+    header.routing_id = 4
+    header.originator = "zero"
+    job_op = body.job_op
+    job_op.action = 4
+    
+    group = NioEventLoopGroup()
+    
+    try:
+      make_request(group, host, port, request)
+    finally:
+        
+    
