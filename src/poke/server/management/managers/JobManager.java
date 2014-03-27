@@ -86,8 +86,21 @@ public class JobManager {
 
 	public JobManager(String nodeId) {
 		this.nodeId = nodeId;
+		init();
+	}
+	protected void init()
+	{
+		if(isLeader())
+			(new JobBidWorker(this)).start();
 	}
 
+	public boolean isLeader()
+	{
+		if(nodeId.equals(ElectionManager.getLeader()))
+			return true;
+		else
+			return false;
+	}
 	/**
 	 * Amit: Put new Job Proposal to be sent to other Servers Must be thread safe
 	 * Accessed by PeChannelQueue
@@ -125,7 +138,7 @@ public class JobManager {
 	 */
 	public void processRequest(JobProposal req) {
 		//TODO need to check is node id and proposal id is same, remove request, else bid and forward
-		if(true/*I am the Leader*/)
+		if(isLeader())
 		{
 			//do nothing
 			return;
@@ -158,7 +171,7 @@ public class JobManager {
 			logger.info("Job bidding request received on channel..!");
 		}
 		
-		if(true /*I am the Leader*/)
+		if(isLeader())
 		{
 			queue_JobBid.add(req);
 		}
@@ -215,13 +228,28 @@ public class JobManager {
 		{
 			JobBid finalJB = null;
 			
-			//TODO find jobbid with highest weight
-			
+			//find jobbid with highest weight
+			int size = jobBids.size();
+			for(int i = 0; i< size;i++)
+			{
+				JobBid jb = jobBids.remove(i);
+				if(finalJB == null)
+				{
+					finalJB = jb;
+				}
+				else
+				{
+					if(finalJB.getBid() < jb.getBid())
+					{
+						finalJB = jb;
+					}
+				}
+			}
 			return finalJB;
 		}
 		@Override
 		public void run() {
-			while(true)
+			while(true && isLeader())
 			{
 				if(jobManager.queue_JobBid.isEmpty())
 				{

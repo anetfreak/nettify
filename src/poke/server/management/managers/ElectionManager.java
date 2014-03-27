@@ -53,7 +53,20 @@ public class ElectionManager {
 	protected static AtomicReference<ElectionManager> instance = new AtomicReference<ElectionManager>();
 	private ChannelFuture cf;
 	private String nodeId;
-	private String LeaderId;
+	public static String LeaderId = ""; // Current Leader
+	public static String currentNode = ""; // Currently connected node
+
+	public static String getLeader() {
+		return LeaderId;
+	}
+
+	public static String getCurrentNode() {
+		return currentNode;
+	}
+
+	public static void setCurrentNode(String node) {
+		currentNode = node;
+	}
 
 	class ElectionNearestNode {
 		Channel ch;
@@ -109,7 +122,7 @@ public class ElectionManager {
 	ArrayList<ElectionNearestNode> list_nearestNode = new ArrayList<ElectionNearestNode>();
 	/** @brief the number of votes this server can cast */
 	private int votes = 1;
-	private VoteAction status = VoteAction.ELECTION;
+	private VoteAction status = VoteAction.NOMINATE;
 
 	public void setStatus(VoteAction status) {
 		this.status = status;
@@ -142,62 +155,43 @@ public class ElectionManager {
 	}
 
 	public void addOutgoingChannel() {
-/*
-		// logger.info("adding channel in EL");
-		// ElectionNearestNode enn = new ElectionNearestNode(ch, sa);
-		// list_nearestNode.add(enn);
-		//logger.info("in addOutgoing Channel , NodeId: "	);
-		for (int i = 0; i < list_nearestNode.size(); i++) {
-			// if (list_nearestNode.get(i).getNodeId().equals(nodeId)) {
-			if (list_nearestNode.get(i).getChannel() == null) {
-				Bootstrap b = new Bootstrap();
-				EventLoopGroup group = new NioEventLoopGroup();
-				ChannelFuture channel;
-				// @TODO newFixedThreadPool(2);
-				boolean compressComm = false;
-				b.group(group).channel(NioSocketChannel.class)
-						.handler(new ManagementInitializer(compressComm));
-				b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000);
-				b.option(ChannelOption.TCP_NODELAY, true);
-				b.option(ChannelOption.SO_KEEPALIVE, true);
-				// boolean compressComm = false;
-				// b.(new ManagementInitializer(compressComm));
-
-				// Make the connection attempt.
-				// logger.info("channel connecting to host " + host + " port: "
-				// + mgmtport);
-				channel = b.connect(list_nearestNode.get(i).getHost(),
-						list_nearestNode.get(i).getMgmtPort())
-						.syncUninterruptibly();
-				channel.awaitUninterruptibly(5000l);
-				channel.channel()
-						.closeFuture()
-						.addListener(
-								new CloseChannelListener(list_nearestNode
-										.get(i).getNodeId()));
-				cf = channel;
-				if (cf != null)
-					if (channel.channel().isOpen())
-					{	if(channel.channel().isWritable())
-						list_nearestNode.get(i).setChannel(cf.channel());
-						logger.info("added to outgoing queue of Election manager, NodedId: "
-								+ nodeId);
-						
-						logger.info("Channel is created and is open");
-					}
-					else {
-						logger.info("Channel is not open");
-						return;
-					}
-				// ElectionNearestNode enn = new ElectionNearestNode(ch, sa);
-				// list_nearestNode.add(enn);
-				// ch.closeFuture().addListener(new CloseChannelListener(enn));
-				
-				// }
-
-			}
-		}
-		*/
+		/*
+		 * // logger.info("adding channel in EL"); // ElectionNearestNode enn =
+		 * new ElectionNearestNode(ch, sa); // list_nearestNode.add(enn);
+		 * //logger.info("in addOutgoing Channel , NodeId: " ); for (int i = 0;
+		 * i < list_nearestNode.size(); i++) { // if
+		 * (list_nearestNode.get(i).getNodeId().equals(nodeId)) { if
+		 * (list_nearestNode.get(i).getChannel() == null) { Bootstrap b = new
+		 * Bootstrap(); EventLoopGroup group = new NioEventLoopGroup();
+		 * ChannelFuture channel; // @TODO newFixedThreadPool(2); boolean
+		 * compressComm = false; b.group(group).channel(NioSocketChannel.class)
+		 * .handler(new ManagementInitializer(compressComm));
+		 * b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000);
+		 * b.option(ChannelOption.TCP_NODELAY, true);
+		 * b.option(ChannelOption.SO_KEEPALIVE, true); // boolean compressComm =
+		 * false; // b.(new ManagementInitializer(compressComm));
+		 * 
+		 * // Make the connection attempt. //
+		 * logger.info("channel connecting to host " + host + " port: " // +
+		 * mgmtport); channel = b.connect(list_nearestNode.get(i).getHost(),
+		 * list_nearestNode.get(i).getMgmtPort()) .syncUninterruptibly();
+		 * channel.awaitUninterruptibly(5000l); channel.channel() .closeFuture()
+		 * .addListener( new CloseChannelListener(list_nearestNode
+		 * .get(i).getNodeId())); cf = channel; if (cf != null) if
+		 * (channel.channel().isOpen()) { if(channel.channel().isWritable())
+		 * list_nearestNode.get(i).setChannel(cf.channel());
+		 * logger.info("added to outgoing queue of Election manager, NodedId: "
+		 * + nodeId);
+		 * 
+		 * logger.info("Channel is created and is open"); } else {
+		 * logger.info("Channel is not open"); return; } // ElectionNearestNode
+		 * enn = new ElectionNearestNode(ch, sa); // list_nearestNode.add(enn);
+		 * // ch.closeFuture().addListener(new CloseChannelListener(enn));
+		 * 
+		 * // }
+		 * 
+		 * } }
+		 */
 	}
 
 	/**
@@ -221,52 +215,57 @@ public class ElectionManager {
 
 		if (req.getVote().getNumber() == VoteAction.ELECTION_VALUE) {
 			// an election is declared!
-			setStatus(VoteAction.ELECTION);
-			logger.info("an election is declared by node " + req.getNodeId());
-		} 
-		else if (req.getVote().getNumber() == VoteAction.DECLAREVOID_VALUE) {
+			if (getStatus() != VoteAction.NOMINATE) {
+				setStatus(VoteAction.NOMINATE);
+				createAndSend_test(req.getNodeId(), VoteAction.ELECTION,
+						req.getBallotId(), "Declare Election");
+				logger.info("an election is declared by node "
+						+ req.getNodeId());
+			}
+		} else if (req.getVote().getNumber() == VoteAction.DECLAREVOID_VALUE) {
 			// no one was elected, I am dropping into standby mode`
 			logger.info("no one was elected, I am dropping into standby mode");
-		} 
-		else if (req.getVote().getNumber() == VoteAction.DECLAREWINNER_VALUE) {
+		} else if (req.getVote().getNumber() == VoteAction.DECLAREWINNER_VALUE) {
 			// some node declared them self the leader
 			LeaderId = req.getBallotId();
-			if(!req.getNodeId().contentEquals(nodeId))
-				createAndSend_test(req.getNodeId(), VoteAction.DECLAREWINNER, req.getBallotId(),"I am the winner");
+			if (!req.getNodeId().contentEquals(nodeId))
+				createAndSend_test(req.getNodeId(), VoteAction.DECLAREWINNER,
+						req.getBallotId(), "Winner Declared");
 			setStatus(VoteAction.DECLAREWINNER);
-			logger.info("node " + req.getBallotId()	+ " declared them self the leader");
-		} 
-		else if (req.getVote().getNumber() == VoteAction.ABSTAIN_VALUE) {
+			logger.info("node " + req.getBallotId()
+					+ " declared them self the leader");
+		} else if (req.getVote().getNumber() == VoteAction.ABSTAIN_VALUE) {
 			// for some reason, I decline to vote
 			setStatus(VoteAction.ABSTAIN);
 			logger.info("for some reason, I decline to vote");
-		} 
-		else if (req.getVote().getNumber() == VoteAction.NOMINATE_VALUE) {
-			if(getStatus() == VoteAction.DECLAREWINNER)
-			{
-				createAndSend_test(nodeId, VoteAction.DECLAREWINNER, LeaderId,"I am the winner");
+		} else if (req.getVote().getNumber() == VoteAction.NOMINATE_VALUE) {
+			if (getStatus() == VoteAction.DECLAREWINNER) {
+				createAndSend_test(nodeId, VoteAction.DECLAREWINNER, LeaderId,
+						"I am the winner");
 				return;
 			}
 			setStatus(VoteAction.NOMINATE);
-			logger.info("in Nominate Value, checking the node id : "+ req.getNodeId());
+			logger.info("in Nominate Value, checking the node id : "
+					+ req.getNodeId());
 			int comparedToMe = req.getNodeId().compareTo(nodeId);
 			if (comparedToMe <= -1) {
 				// Someone else has a higher priority, forward nomination
 				logger.info("Someone else has a higher priority, forward nomination");
-				createAndSend_test(req.getNodeId(), req.getVote(),req.getBallotId(), req.getDesc());
+				createAndSend_test(req.getNodeId(), req.getVote(),
+						req.getBallotId(), req.getDesc());
 				setStatus(VoteAction.NOMINATE);
 				// TODO forward
-			} 
-			else if (comparedToMe >= 1) {
+			} else if (comparedToMe >= 1) {
 				// I have a higher priority, nominate myself
 				logger.info("I have a higher priority, nominate myself");
-				createAndSend_test(nodeId, VoteAction.NOMINATE, nodeId,"Nominating myself");
+				createAndSend_test(nodeId, VoteAction.NOMINATE, nodeId,
+						"Nominating myself");
 				setStatus(VoteAction.NOMINATE);
 				// TODO nominate myself
-			} 
-			else {
+			} else {
 				logger.info("I am the node, Declaring myself as the winner!! Hurrrrey!! :) OCG");
-				createAndSend_test(req.getNodeId(), VoteAction.DECLAREWINNER, req.getBallotId(),"I am the winner");
+				createAndSend_test(req.getNodeId(), VoteAction.DECLAREWINNER,
+						req.getBallotId(), "I am the winner");
 				LeaderId = req.getBallotId();
 				setStatus(VoteAction.DECLAREWINNER);
 			}
@@ -274,35 +273,35 @@ public class ElectionManager {
 	}
 
 	public void createAndSend_test(String lnodeId, VoteAction vote,
-			String ballotId, String desc)
-	{
-		
-		for (HeartbeatData hd : HeartbeatManager.getInstance().getOutgoingQueue_test().values()) {
-			logger.info("EL beat (" + nodeId + ") sent to " + hd.getNodeId() + " at " + hd.getHost() + hd.channel.remoteAddress());
-			
-			try{
-			LeaderElection.Builder h = LeaderElection.newBuilder();
-			h.setNodeId(lnodeId);
-			h.setVote(vote);
-			h.setBallotId(ballotId);
-			h.setDesc(desc);
+			String ballotId, String desc) {
 
-			Management.Builder b = Management.newBuilder();
-			b.setElection(h.build());
-			if(hd.channel.isWritable())
-			{
-				hd.channel.writeAndFlush(b.build());
+		for (HeartbeatData hd : HeartbeatManager.getInstance()
+				.getOutgoingQueue_test().values()) {
+			logger.info("EL beat (" + nodeId + ") sent to " + hd.getNodeId()
+					+ " at " + hd.getHost() + hd.channel.remoteAddress());
+
+			try {
+				LeaderElection.Builder h = LeaderElection.newBuilder();
+				h.setNodeId(lnodeId);
+				h.setVote(vote);
+				h.setBallotId(ballotId);
+				h.setDesc(desc);
+
+				Management.Builder b = Management.newBuilder();
+				b.setElection(h.build());
+				if (hd.channel.isWritable()) {
+					hd.channel.writeAndFlush(b.build());
+				}
+			} catch (Exception e) {
+				// hd.incrementFailuresOnSend();
+				logger.error("Failed  to send  for " + hd.getNodeId() + " at "
+						+ hd.getHost(), e);
 			}
-		}catch(Exception e) {
-			//hd.incrementFailuresOnSend();
-			logger.error("Failed  to send  for " + hd.getNodeId()
-					+ " at " + hd.getHost(), e);
+
 		}
-		
-		}
-		
+
 	}
-	
+
 	public boolean createAndSend(String lnodeId, VoteAction vote,
 			String ballotId, String desc) {
 		for (int i = 0; i < list_nearestNode.size(); i++) {
@@ -380,7 +379,8 @@ public class ElectionManager {
 		@Override
 		public void operationComplete(ChannelFuture future) throws Exception {
 			for (int i = 0; i < list_nearestNode.size(); i++) {
-				logger.info("Channle closing with node id: " + nodeId + "  " + list_nearestNode.get(i).getNodeId());
+				logger.info("Channle closing with node id: " + nodeId + "  "
+						+ list_nearestNode.get(i).getNodeId());
 				if (list_nearestNode.get(i).getNodeId().equals(nodeId)) {
 					logger.info("OK fine");
 					list_nearestNode.get(i).setChannel(null);

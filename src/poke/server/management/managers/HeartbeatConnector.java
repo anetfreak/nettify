@@ -23,6 +23,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import eye.Comm.LeaderElection.VoteAction;
+
 import poke.monitor.HeartMonitor;
 import poke.server.management.managers.HeartbeatData.BeatStatus;
 
@@ -133,8 +135,8 @@ public class HeartbeatConnector extends Thread {
 				//Amit trying to implement automatic handling on ring
 				//for (HeartMonitor hb : monitors) {
 				for(int i = 0;i<=3;i++){
-					Integer nextNode = (NodeIdToInt(this.nodeId) + 1 + i)%4;
-					if(nextNode == NodeIdToInt(this.nodeId))
+					Integer nextNode = (NodeIdToInt(this.nodeId) + 1 + i)%4; //next node to which this node should connect in Ring
+					if(nextNode == NodeIdToInt(this.nodeId)) //if next node is this node then continue
 						continue;
 					HeartMonitor hb = map_monitors.get(nextNode);
 					if (!hb.isConnected()) {
@@ -149,11 +151,33 @@ public class HeartbeatConnector extends Thread {
 									logger.info("Connected to node :"+hb.getNodeInfo());
 									
 									if(currentNode != nextNode && currentNode != NodeIdToInt(nodeId))
-									{	logger.info("1. Switching from "+ currentNode + " ==> "+nextNode);
+									{	
+										//checking is leader is down and redo election if so
+										if(currentNode == NodeIdToInt(ElectionManager.getLeader()))
+										{
+											if(currentNode < NodeIdToInt(nodeId))
+											{
+												if(nextNode < currentNode)
+												{
+													//leader is down redo election
+													ElectionManager.getInstance().setStatus(VoteAction.ELECTION);
+												}
+											}
+											else
+											{
+												if(nextNode > currentNode)
+												{
+													//leader is down, redo election
+													ElectionManager.getInstance().setStatus(VoteAction.ELECTION);
+												}
+											}
+										}
+										logger.info("1. Switching from "+ currentNode + " ==> "+nextNode);
 										logger.info("Disconnecting from Node: " + map_monitors.get(currentNode).getNodeInfo());
 										if(map_monitors.get(currentNode).isConnected())
 											map_monitors.get(currentNode).closeConn(); 
 										currentNode = nextNode;
+										ElectionManager.setCurrentNode(IntToNodeId(currentNode));
 										logger.info("Now Current Node is " + currentNode);
 									}
 									break;
@@ -164,12 +188,12 @@ public class HeartbeatConnector extends Thread {
 							{
 								if(currentNode != nextNode && currentNode != NodeIdToInt(nodeId))
 								{
-									
 									logger.info("Connected to node outside loop :"+hb.getNodeInfo());
 									logger.info("2. Switching from "+currentNode + " ==> "+nextNode);
 									if(map_monitors.get(currentNode).isConnected())
 										map_monitors.get(currentNode).closeConn();
 									currentNode = nextNode;
+									ElectionManager.setCurrentNode(IntToNodeId(currentNode));
 								}
 								break;
 							}
@@ -186,7 +210,9 @@ public class HeartbeatConnector extends Thread {
 							if(map_monitors.get(currentNode).isConnected())
 								map_monitors.get(currentNode).closeConn();
 							currentNode = nextNode;
+							ElectionManager.setCurrentNode(IntToNodeId(currentNode));
 						}
+						
 						break;
 					}
 				}

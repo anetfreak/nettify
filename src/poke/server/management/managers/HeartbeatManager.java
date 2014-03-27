@@ -215,10 +215,18 @@ public class HeartbeatManager extends Thread {
 				Thread.sleep(sHeartRate);
 				refreshOutgoingChannel();
 				//ElectionManager.getInstance().addOutgoingChannel();
-				if(ElectionManager.getInstance().getStatus() == VoteAction.ELECTION)
+				
+				if(ElectionManager.getInstance().getStatus() == VoteAction.NOMINATE)
 				{
 					ElectionManager.getInstance().createAndSend_test(nodeId, VoteAction.NOMINATE, nodeId,
 							"Nominating myself");
+					//ElectionManager.getInstance().startElectionByVote();
+				}
+				else if(ElectionManager.getInstance().getStatus() == VoteAction.ELECTION)
+				{
+					//ElectionManager.getInstance().createAndSend_test(nodeId, VoteAction.NOMINATE, nodeId,"Nominating myself");
+					ElectionManager.getInstance().createAndSend_test(nodeId, VoteAction.ELECTION, nodeId,"Election Declared");
+					ElectionManager.getInstance().setStatus(VoteAction.NOMINATE);
 					//ElectionManager.getInstance().startElectionByVote();
 				}
 				// ignore until we have edges with other nodes
