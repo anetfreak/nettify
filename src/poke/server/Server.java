@@ -281,7 +281,7 @@ public class Server {
 		if (str != null)
 			votes = Integer.parseInt(str);
 		electionMgr = ElectionManager.getInstance(myId, votes);
-		electionMgr.startElectionByVote();
+		//electionMgr.startElectionByVote();
 		
 		// create manager for accepting jobs
 		jobMgr = JobManager.getInstance(myId);

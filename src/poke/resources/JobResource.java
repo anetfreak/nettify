@@ -16,14 +16,44 @@
 package poke.resources;
 
 import poke.server.resources.Resource;
+import poke.server.resources.ResourceUtil;
+import eye.Comm.JobProposal;
+import eye.Comm.Payload;
+import eye.Comm.Ping;
+import eye.Comm.PokeStatus;
 import eye.Comm.Request;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JobResource implements Resource {
 
+	protected static Logger logger = LoggerFactory.getLogger("server");
+	
 	@Override
 	public Request process(Request request) {
 		// TODO Auto-generated method stub
-		return null;
+		//the request received is a job serving request
+		
+		logger.info("Creating a job processing request ..! "+request.getBody().getJobOp().getJobId());
+
+		Request.Builder rb = Request.newBuilder();
+		// metadata
+		rb.setHeader(ResourceUtil.buildHeaderFrom(request.getHeader(), PokeStatus.SUCCESS, null));
+
+		// payload
+		Payload.Builder pb = Payload.newBuilder();
+		JobProposal.Builder jp = JobProposal.newBuilder();
+		
+		
+		Ping.Builder fb = Ping.newBuilder();
+		fb.setTag(request.getBody().getPing().getTag());
+		fb.setNumber(request.getBody().getPing().getNumber());
+		pb.setPing(fb.build());
+		rb.setBody(pb.build());
+		Request reply = rb.build();
+		
+		return reply;
 	}
 
 }

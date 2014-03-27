@@ -60,6 +60,7 @@ public class HeartbeatManager extends Thread {
 
 	ConcurrentHashMap<Channel, HeartbeatData> outgoingHB = new ConcurrentHashMap<Channel, HeartbeatData>();
 	ConcurrentHashMap<String, HeartbeatData> incomingHB = new ConcurrentHashMap<String, HeartbeatData>();
+	
 	public ConcurrentHashMap<Channel, HeartbeatData> getOutgoingQueue_test()
 	{
 		return this.outgoingHB;

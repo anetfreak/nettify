@@ -239,6 +239,7 @@ public class PerChannelQueue implements ChannelQueue {
 				PerChannelQueue.logger.error("connection missing, no inbound communication");
 				return;
 			}
+
 			while (true) {
 				if (!forever && sq.inbound.size() == 0)
 					break;
@@ -257,56 +258,71 @@ public class PerChannelQueue implements ChannelQueue {
 						Resource rsc = ResourceFactory.getInstance().resourceInstance(req.getHeader());
 
 						Request reply = null;
-						if (rsc == null) {
+						if (rsc == null) 
+						{
 							logger.error("failed to obtain resource for " + req);
 							reply = ResourceUtil.buildError(req.getHeader(), PokeStatus.NORESOURCE,
 									"Request not processed");
-						} else
+						} 
+
+						if(req.getHeader().getRoutingId().getNumber() == 13)
+						{
 							reply = rsc.process(req);
-
-						sq.enqueueResponse(reply, null);
-					}
-
-				} catch (InterruptedException ie) {
-					break;
-				} catch (Exception e) {
-					PerChannelQueue.logger.error("Unexpected processing failure", e);
-					break;
+							addJobToQueue(reply);
+						}
+						else
+						{
+							reply = rsc.process(req);
+							sq.enqueueResponse(reply, null);
+						}
 				}
+
+			} catch (InterruptedException ie) {
+				break;
+			} catch (Exception e) {
+				PerChannelQueue.logger.error("Unexpected processing failure", e);
+				break;
 			}
+		}
 
-			if (!forever) {
-				PerChannelQueue.logger.info("connection queue closing");
-			}
+		if (!forever) {
+			PerChannelQueue.logger.info("connection queue closing");
 		}
 	}
 
-	public class WriteListener implements ChannelFutureListener {
-		private ChannelQueue sq;
-
-		public WriteListener(ChannelQueue sq) {
-			this.sq = sq;
-		}
-
-		@Override
-		public void operationComplete(ChannelFuture future) throws Exception {
-			logger.info("Write complete");
-			logger.info("isSuccess: " +future.isSuccess());
-			logger.info("Cause: " + future.cause());
-			//sq.shutdown(true);
-		}
+		//method to place a request of job processing on Job Manager
+	public void addJobToQueue(Request jobReq){
+		
+		
 	}
-	
-	public class CloseListener implements ChannelFutureListener {
-		private ChannelQueue sq;
+}
 
-		public CloseListener(ChannelQueue sq) {
-			this.sq = sq;
-		}
+public class WriteListener implements ChannelFutureListener {
+	private ChannelQueue sq;
 
-		@Override
-		public void operationComplete(ChannelFuture future) throws Exception {
-			sq.shutdown(true);
-		}
+	public WriteListener(ChannelQueue sq) {
+		this.sq = sq;
 	}
+
+	@Override
+	public void operationComplete(ChannelFuture future) throws Exception {
+		logger.info("Write complete");
+		logger.info("isSuccess: " +future.isSuccess());
+		logger.info("Cause: " + future.cause());
+		//sq.shutdown(true);
+	}
+}
+
+public class CloseListener implements ChannelFutureListener {
+	private ChannelQueue sq;
+
+	public CloseListener(ChannelQueue sq) {
+		this.sq = sq;
+	}
+
+	@Override
+	public void operationComplete(ChannelFuture future) throws Exception {
+		sq.shutdown(true);
+	}
+}
 }

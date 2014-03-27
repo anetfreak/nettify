@@ -218,7 +218,7 @@ public class ElectionManager {
 				return;
 			}
 		}
-		
+
 		if (req.getVote().getNumber() == VoteAction.ELECTION_VALUE) {
 			// an election is declared!
 			setStatus(VoteAction.ELECTION);

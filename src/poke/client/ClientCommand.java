@@ -21,9 +21,12 @@ import org.slf4j.LoggerFactory;
 import poke.client.comm.CommConnection;
 import poke.client.comm.CommListener;
 import eye.Comm.Header;
+import eye.Comm.JobDesc;
+import eye.Comm.JobOperation;
 import eye.Comm.Payload;
 import eye.Comm.Ping;
 import eye.Comm.Request;
+import eye.Comm.JobOperation.JobAction;
 
 /**
  * The command class is the concrete implementation of the functionality of our
@@ -94,6 +97,37 @@ public class ClientCommand {
 
 		eye.Comm.Request req = r.build();
 
+		try {
+			//comm.channel.channel().writeAndFlush(req);
+			comm.sendMessage(req);
+		} catch (Exception e) {
+			logger.warn("Unable to deliver message, queuing");
+		}
+	}
+	
+	public void sendRequest(JobAction jAct, String jobId, JobDesc desc) {
+		//sending a job processing request to the server
+		JobOperation.Builder j = eye.Comm.JobOperation.newBuilder();
+		j.setAction(jAct);
+		j.setJobId(jobId);
+		j.setData(desc);
+		
+		//payload containing data for job
+		Request.Builder r = Request.newBuilder();
+		eye.Comm.Payload.Builder p = Payload.newBuilder();
+		p.setJobOp(j.build());
+		r.setBody(p.build());
+		
+		//header with routing info
+		eye.Comm.Header.Builder h = Header.newBuilder();
+		h.setOriginator("client");
+		h.setTag("jobs");
+		h.setTime(System.currentTimeMillis());
+		h.setRoutingId(eye.Comm.Header.Routing.JOBS);
+		r.setHeader(h.build());
+		
+		eye.Comm.Request req = r.build();
+		
 		try {
 			//comm.channel.channel().writeAndFlush(req);
 			comm.sendMessage(req);
