@@ -46,6 +46,11 @@ public class ResourceFactory {
 	protected static Logger logger = LoggerFactory.getLogger("server");
 
 	private static ServerConf cfg;
+	
+	public static ServerConf getCfg() {
+		return cfg;
+	}
+
 	private static AtomicReference<ResourceFactory> factory = new AtomicReference<ResourceFactory>();
 
 	public static void initialize(ServerConf cfg) {

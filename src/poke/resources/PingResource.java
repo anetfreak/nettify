@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import poke.server.resources.Resource;
 import poke.server.resources.ResourceUtil;
+import eye.Comm.Management;
 import eye.Comm.Payload;
 import eye.Comm.Ping;
 import eye.Comm.PokeStatus;
@@ -57,5 +58,9 @@ public class PingResource implements Resource {
 		Request reply = rb.build();
 
 		return reply;
+	}
+	
+	public Management processMgmtRequest(Request request) {
+		return null;
 	}
 }

@@ -25,12 +25,14 @@ import java.util.concurrent.LinkedBlockingDeque;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import poke.server.management.managers.JobManager;
 import poke.server.resources.Resource;
 import poke.server.resources.ResourceFactory;
 import poke.server.resources.ResourceUtil;
 
 import com.google.protobuf.GeneratedMessage;
 
+import eye.Comm.Management;
 import eye.Comm.PokeStatus;
 import eye.Comm.Request;
 
@@ -257,6 +259,8 @@ public class PerChannelQueue implements ChannelQueue {
 						// handle it locally
 						Resource rsc = ResourceFactory.getInstance().resourceInstance(req.getHeader());
 
+						
+						//String node_id = ResourceFactory.getInstance().resourceInstance(req.getHeader().)
 						Request reply = null;
 						if (rsc == null) 
 						{
@@ -267,8 +271,9 @@ public class PerChannelQueue implements ChannelQueue {
 
 						if(req.getHeader().getRoutingId().getNumber() == 13)
 						{
-							reply = rsc.process(req);
-							addJobToQueue(reply);
+//							reply = rsc.process(req);
+							Management mgmt = rsc.processMgmtRequest(req);
+							addJobToQueue(mgmt);
 						}
 						else
 						{
@@ -291,9 +296,9 @@ public class PerChannelQueue implements ChannelQueue {
 	}
 
 		//method to place a request of job processing on Job Manager
-	public void addJobToQueue(Request jobReq){
+	public void addJobToQueue(Management jobReq){
 		
-		
+		JobManager.submitJobProposal(sq, jobReq);
 	}
 }
 
