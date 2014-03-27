@@ -16,10 +16,19 @@
  */
 package poke.server.management.managers;
 
+import io.netty.channel.Channel;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import poke.server.queue.PerChannelQueue;
 
 import eye.Comm.JobBid;
 import eye.Comm.JobProposal;
@@ -37,7 +46,33 @@ import eye.Comm.Management;
 public class JobManager {
 	protected static Logger logger = LoggerFactory.getLogger("management");
 	protected static AtomicReference<JobManager> instance = new AtomicReference<JobManager>();
-
+	private class PCQandJob
+	{
+		private PerChannelQueue pcq;
+		private Management jp;
+		public PCQandJob(PerChannelQueue pcq, Management jp)
+		{
+			this.pcq = pcq;
+			this.jp = jp;
+		}
+		public PerChannelQueue getPCQ()
+		{
+			return pcq;
+		}
+		public Management getJobProposal()
+		{
+			return jp;
+		}
+		
+	}
+	//Map that will hold PerChannelQueue reference and JobProposal with JobId until response is sent to PCQ
+	private Map<String,PCQandJob> queue_JobProposal = new HashMap<String,PCQandJob>();
+	//All the incoming jobbid will be queued here, if i am the leader
+	private Queue<JobBid> queue_JobBid = new LinkedList<JobBid>();
+	//final map which will be processed and single JobBid will be sent to PerChannelQueue
+	private Map<String,ArrayList<JobBid>> map_JobBid = new HashMap<String,ArrayList<JobBid>>(); 
+	//TODO Timer Map, checks if time for bid expired then remove bid and send failure to client
+	private Map<String,Long> map_JobIdToTime = new HashMap<String,Long>();
 	private String nodeId;
 
 	public static JobManager getInstance(String id) {
@@ -54,6 +89,34 @@ public class JobManager {
 	}
 
 	/**
+	 * Amit: Put new Job Proposal to be sent to other Servers Must be thread safe
+	 * Accessed by PeChannelQueue
+	 */
+	public synchronized boolean submitJobProposal(PerChannelQueue sq, Management jbreq) {
+		//get jobId and store
+		queue_JobProposal.put(jbreq.getJobPropose().getJobId(), new PCQandJob(sq,jbreq));
+		sendResponse(jbreq);
+		return true;
+	}
+	
+	public void sendResponse(Management mreq)
+	{
+		for (HeartbeatData hd : HeartbeatManager.getInstance()
+				.getOutgoingQueue_test().values()) {
+			logger.info("JobProposal Request beat (" + nodeId + ") sent to "
+					+ hd.getNodeId() + " at " + hd.getHost()
+					+ hd.channel.remoteAddress());
+			try {
+				if (hd.channel.isWritable()) {
+					hd.channel.writeAndFlush(mreq);
+				}
+			} catch (Exception e) {
+				logger.error("Failed  to send  for " + hd.getNodeId() + " at " + hd.getHost(), e);
+			}
+		}
+	}
+
+	/**
 	 * a new job proposal has been sent out that I need to evaluate if I can run
 	 * it
 	 * 
@@ -61,15 +124,19 @@ public class JobManager {
 	 *            The proposal
 	 */
 	public void processRequest(JobProposal req) {
+		//TODO need to check is node id and proposal id is same, remove request, else bid and forward
+		if(true/*I am the Leader*/)
+		{
+			//do nothing
+			return;
+		}
 		logger.info("Received a Job Proposal");
 		if (req == null) {
 			logger.info("No Job Proposal request received..!");
 			return;
-		}
-		else
-		{
-			logger.info("Owner of the Job Proposal : "+req.getOwnerId());
-			logger.info("Job ID Received : "+req.getJobId());
+		} else {
+			logger.info("Owner of the Job Proposal : " + req.getOwnerId());
+			logger.info("Job ID Received : " + req.getJobId());
 			logger.info("I start to bid for the job..!");
 			startJobBidding(nodeId, req.getOwnerId(), req.getJobId());
 		}
@@ -77,31 +144,45 @@ public class JobManager {
 
 	/**
 	 * a job bid for my job
+	 * 
 	 * @param req
 	 *            The bid
 	 */
 	public void processRequest(JobBid req) {
-
+		//If I am the leader, process Job Bid else forward
+		
 		if (req == null) {
 			logger.info("No job bidding request received..!");
 			return;
+		} else {
+			logger.info("Job bidding request received on channel..!");
+		}
+		
+		if(true /*I am the Leader*/)
+		{
+			queue_JobBid.add(req);
 		}
 		else
 		{
-			logger.info("Job bidding request received on channel..!");
+			Management.Builder b = Management.newBuilder();
+			b.setJobBid(req);
+			sendResponse(b.build());
 		}
 	}
 
 	/**
 	 * Custom method for bidding for the proposed job
 	 */
-	public void startJobBidding(String lnodeId, long ownerId, String ljobId){
+	public void startJobBidding(String lnodeId, long ownerId, String ljobId) {
 
-		for (HeartbeatData hd : HeartbeatManager.getInstance().getOutgoingQueue_test().values()) {
-			logger.info("Job proposal request on (" + nodeId + ") sent to " + hd.getNodeId() + " at " + hd.getHost() + hd.channel.remoteAddress());
+		for (HeartbeatData hd : HeartbeatManager.getInstance()
+				.getOutgoingQueue_test().values()) {
+			logger.info("Job proposal request on (" + nodeId + ") sent to "
+					+ hd.getNodeId() + " at " + hd.getHost()
+					+ hd.channel.remoteAddress());
 
-			try{
-				//sending job proposal request for bidding 
+			try {
+				// sending job proposal request for bidding
 				JobBid.Builder jb = JobBid.newBuilder();
 				jb.setBid(5);
 				jb.setOwnerId(ownerId);
@@ -109,16 +190,86 @@ public class JobManager {
 
 				Management.Builder b = Management.newBuilder();
 				b.setJobBid(jb);
-				if(hd.channel.isWritable())
-				{
+				if (hd.channel.isWritable()) {
 					hd.channel.writeAndFlush(b.build());
 				}
 
-			}catch(Exception e) {
-				logger.error("Failed  to send bidding request for " + hd.getNodeId()
-						+ " at " + hd.getHost(), e);
+			} catch (Exception e) {
+				logger.error(
+						"Failed  to send bidding request for " + hd.getNodeId()
+								+ " at " + hd.getHost(), e);
 			}
 
+		}
+	}
+
+
+	protected class JobBidWorker extends Thread{
+		JobManager jobManager;
+		
+		public JobBidWorker(JobManager jm)
+		{
+			this.jobManager = jm;
+		}
+		public JobBid processJobBids(ArrayList<JobBid> jobBids)
+		{
+			JobBid finalJB = null;
+			
+			//TODO find jobbid with highest weight
+			
+			return finalJB;
+		}
+		@Override
+		public void run() {
+			while(true)
+			{
+				if(jobManager.queue_JobBid.isEmpty())
+				{
+					//TODO can check for time here
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+				else
+				{
+					JobBid req = jobManager.queue_JobBid.remove();
+					String jobId = req.getJobId();
+					if(!jobManager.map_JobBid.containsKey(jobId))
+					{
+						ArrayList<JobBid> jobBids = new ArrayList<JobBid>();
+						jobBids.add(req);
+						jobManager.map_JobBid.put(jobId,jobBids);
+					}
+					else
+					{
+						ArrayList<JobBid> jobBids = jobManager.map_JobBid.get(jobId);
+						if(jobBids.size() >= 3)
+						{
+							//remove and process and send response
+							JobBid finalJB = processJobBids(jobBids);
+							PerChannelQueue pcq = jobManager.queue_JobProposal.get(jobId).getPCQ();
+							//TOTO pcq.putBidResponse(finalJB);
+							jobManager.queue_JobProposal.remove(jobId);
+							jobManager.map_JobBid.remove(jobId);
+							jobBids = null;
+						}
+						else
+						{
+							jobBids.add(req);
+							jobManager.map_JobBid.put(jobId,jobBids);
+						}
+					}
+					
+					//TODO put it in hashmap with jobid and list of jobs //TBD time
+					//check if there are 3 entries //TBD or if time expires
+					
+					
+				}
+				
+				
+			}
 		}
 	}
 }
