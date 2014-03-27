@@ -299,7 +299,7 @@ public class PerChannelQueue implements ChannelQueue {
 		//method to place a request of job processing on Job Manager
 	public void addJobToQueue(Management jobReq){
 		
-		JobManager.submitJobProposal(sq, jobReq);
+		JobManager.getInstance().submitJobProposal(sq, jobReq);
 	}
 }
 
