@@ -269,6 +269,7 @@ public class PerChannelQueue implements ChannelQueue {
 									"Request not processed");
 						} 
 
+						//if the request is for serving a job - pass the request to job manager as jobProposal
 						if(req.getHeader().getRoutingId().getNumber() == 13)
 						{
 //							reply = rsc.process(req);
