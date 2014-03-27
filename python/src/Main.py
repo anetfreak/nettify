@@ -1,5 +1,6 @@
+import sys
+sys.path.append('/usr/lib')
 from Client import Client
-
 if __name__ == '__main__':
   import sys
   if len(sys.argv) != 3:
