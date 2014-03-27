@@ -1,4 +1,5 @@
 /*
+
  * copyright 2014, gash
  * 
  * Gash licenses this file to you under the Apache License,
@@ -22,6 +23,8 @@ import org.slf4j.LoggerFactory;
 
 import eye.Comm.JobBid;
 import eye.Comm.JobProposal;
+import eye.Comm.LeaderElection;
+import eye.Comm.Management;
 
 /**
  * The job manager class is used by the system to assess and vote on a job. This
@@ -58,15 +61,64 @@ public class JobManager {
 	 *            The proposal
 	 */
 	public void processRequest(JobProposal req) {
-
+		logger.info("Received a Job Proposal");
+		if (req == null) {
+			logger.info("No Job Proposal request received..!");
+			return;
+		}
+		else
+		{
+			logger.info("Owner of the Job Proposal : "+req.getOwnerId());
+			logger.info("Job ID Received : "+req.getJobId());
+			logger.info("I start to bid for the job..!");
+			startJobBidding(nodeId, req.getOwnerId(), req.getJobId());
+		}
 	}
 
 	/**
 	 * a job bid for my job
-	 * 
 	 * @param req
 	 *            The bid
 	 */
 	public void processRequest(JobBid req) {
+
+		if (req == null) {
+			logger.info("No job bidding request received..!");
+			return;
+		}
+		else
+		{
+			logger.info("Job bidding request received on channel..!");
+		}
+	}
+
+	/**
+	 * Custom method for bidding for the proposed job
+	 */
+	public void startJobBidding(String lnodeId, long ownerId, String ljobId){
+
+		for (HeartbeatData hd : HeartbeatManager.getInstance().getOutgoingQueue_test().values()) {
+			logger.info("Job proposal request on (" + nodeId + ") sent to " + hd.getNodeId() + " at " + hd.getHost() + hd.channel.remoteAddress());
+
+			try{
+				//sending job proposal request for bidding 
+				JobBid.Builder jb = JobBid.newBuilder();
+				jb.setBid(5);
+				jb.setOwnerId(ownerId);
+				jb.setJobId(ljobId);
+
+				Management.Builder b = Management.newBuilder();
+				b.setJobBid(jb);
+				if(hd.channel.isWritable())
+				{
+					hd.channel.writeAndFlush(b.build());
+				}
+
+			}catch(Exception e) {
+				logger.error("Failed  to send bidding request for " + hd.getNodeId()
+						+ " at " + hd.getHost(), e);
+			}
+
+		}
 	}
 }
