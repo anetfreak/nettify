@@ -16,8 +16,10 @@
 package poke.resources;
 
 import poke.server.resources.Resource;
+import poke.server.resources.ResourceFactory;
 import poke.server.resources.ResourceUtil;
 import eye.Comm.JobProposal;
+import eye.Comm.Management;
 import eye.Comm.Payload;
 import eye.Comm.Ping;
 import eye.Comm.PokeStatus;
@@ -35,24 +37,45 @@ public class JobResource implements Resource {
 		// TODO Auto-generated method stub
 		//the request received is a job serving request
 		
+//		logger.info("Creating a job processing request ..! "+request.getBody().getJobOp().getJobId());
+//
+//		String nodeId = ResourceFactory.getInstance().getCfg().getServer().getProperty("node.id");
+//		Request.Builder rb = Request.newBuilder();
+//		// metadata
+//		rb.setHeader(ResourceUtil.buildHeaderFrom(request.getHeader(), PokeStatus.SUCCESS, null));
+//
+//		// payload
+//		Management.Builder b = Management.newBuilder();
+//		JobProposal.Builder jp = JobProposal.newBuilder();
+//		jp.setJobId(request.getBody().getJobOp().getJobId());
+//		jp.setOwnerId(Long.parseLong(nodeId));
+//		jp.setWeight(4);
+//		
+//		b.setJobPropose(jp);
+//		Management reply = b.build();
+		return request;
+	}
+	
+	public Management processMgmtRequest(Request request) {
+		// TODO Auto-generated method stub
+		//the request received is a job serving request
+		
 		logger.info("Creating a job processing request ..! "+request.getBody().getJobOp().getJobId());
 
+		String nodeId = ResourceFactory.getInstance().getCfg().getServer().getProperty("node.id");
 		Request.Builder rb = Request.newBuilder();
 		// metadata
 		rb.setHeader(ResourceUtil.buildHeaderFrom(request.getHeader(), PokeStatus.SUCCESS, null));
 
 		// payload
-		Payload.Builder pb = Payload.newBuilder();
+		Management.Builder b = Management.newBuilder();
 		JobProposal.Builder jp = JobProposal.newBuilder();
+		jp.setJobId(request.getBody().getJobOp().getJobId());
+		jp.setOwnerId(Long.parseLong(nodeId));
+		jp.setWeight(4);
 		
-		
-		Ping.Builder fb = Ping.newBuilder();
-		fb.setTag(request.getBody().getPing().getTag());
-		fb.setNumber(request.getBody().getPing().getNumber());
-		pb.setPing(fb.build());
-		rb.setBody(pb.build());
-		Request reply = rb.build();
-		
+		b.setJobPropose(jp);
+		Management reply = b.build();
 		return reply;
 	}
 

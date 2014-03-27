@@ -15,6 +15,7 @@
  */
 package poke.server.resources;
 
+import eye.Comm.Management;
 import eye.Comm.Request;
 
 /**
@@ -34,5 +35,7 @@ public interface Resource {
 	 * @return an action
 	 */
 	Request process(Request request);
+	
+	Management processMgmtRequest(Request request);
 
 }

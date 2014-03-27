@@ -92,7 +92,6 @@ public class ResourceUtil {
 		bldr.setRoutingId(reqHeader.getRoutingId());
 		bldr.setTag(tag);
 		
-		
 		return bldr.build();
 	}
 
