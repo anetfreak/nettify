@@ -84,6 +84,17 @@ public class ResourceUtil {
 
 		return bldr.build();
 	}
+	
+	//building header for a job request
+	public static Header buildHeaderReq(Header reqHeader, String tag, String from){
+		Header.Builder bldr = Header.newBuilder();
+		bldr.setOriginator(from);
+		bldr.setRoutingId(reqHeader.getRoutingId());
+		bldr.setTag(tag);
+		
+		
+		return bldr.build();
+	}
 
 	public static Request buildError(Header reqHeader, PokeStatus status, String statusMsg) {
 		Request.Builder bldr = Request.newBuilder();
