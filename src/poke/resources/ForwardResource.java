@@ -24,6 +24,7 @@ import poke.server.conf.NodeDesc;
 import poke.server.conf.ServerConf;
 import poke.server.resources.Resource;
 import poke.server.resources.ResourceUtil;
+import eye.Comm.Management;
 import eye.Comm.PokeStatus;
 import eye.Comm.Request;
 import eye.Comm.RoutingPath;
@@ -97,6 +98,12 @@ public class ForwardResource implements Resource {
 			}
 		}
 
+		return null;
+	}
+
+	@Override
+	public Management processMgmtRequest(Request request) {
+		// TODO Auto-generated method stub
 		return null;
 	}
 }

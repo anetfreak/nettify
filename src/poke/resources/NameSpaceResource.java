@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import poke.server.resources.Resource;
+import eye.Comm.Management;
 import eye.Comm.Request;
 
 public class NameSpaceResource implements Resource {
@@ -26,6 +27,12 @@ public class NameSpaceResource implements Resource {
 
 	@Override
 	public Request process(Request request) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Management processMgmtRequest(Request request) {
 		// TODO Auto-generated method stub
 		return null;
 	}
