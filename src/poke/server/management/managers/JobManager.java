@@ -326,8 +326,9 @@ public class JobManager {
 					{
 						//put it in hashmap with jobid and list of jobs //TBD time
 						//check if there are 3 entries //TBD or if time expires
+						logger.info("Adding bid to hash map, Job Id: " + jobId + " Map Size: " + jobManager.map_JobBid.size());
 						ArrayList<JobBid> jobBids = jobManager.map_JobBid.get(jobId);
-						if(jobBids.size() >= 2)
+						if(jobBids.size() >= 1)
 						{
 							logger.info("Selected one bid, sending it to PCQ");
 							//remove and process and send response
