@@ -20,6 +20,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 
 import java.lang.Thread.State;
+import java.util.Queue;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import org.slf4j.Logger;
@@ -32,6 +33,8 @@ import poke.server.resources.ResourceUtil;
 
 import com.google.protobuf.GeneratedMessage;
 
+import eye.Comm.JobBid;
+import eye.Comm.JobProposal;
 import eye.Comm.Management;
 import eye.Comm.PokeStatus;
 import eye.Comm.Request;
@@ -259,7 +262,7 @@ public class PerChannelQueue implements ChannelQueue {
 						// handle it locally
 						Resource rsc = ResourceFactory.getInstance().resourceInstance(req.getHeader());
 
-						
+
 						//String node_id = ResourceFactory.getInstance().resourceInstance(req.getHeader().)
 						Request reply = null;
 						if (rsc == null) 
@@ -272,7 +275,7 @@ public class PerChannelQueue implements ChannelQueue {
 						//if the request is for serving a job - pass the request to job manager as jobProposal
 						if(req.getHeader().getRoutingId().getNumber() == 13)
 						{
-//							reply = rsc.process(req);
+							//							reply = rsc.process(req);
 							Management mgmt = rsc.processMgmtRequest(req);
 							addJobToQueue(mgmt);
 						}
@@ -281,54 +284,76 @@ public class PerChannelQueue implements ChannelQueue {
 							reply = rsc.process(req);
 							sq.enqueueResponse(reply, null);
 						}
-				}
+					}
 
-			} catch (InterruptedException ie) {
-				break;
-			} catch (Exception e) {
-				PerChannelQueue.logger.error("Unexpected processing failure", e);
-				break;
+				} catch (InterruptedException ie) {
+					break;
+				} catch (Exception e) {
+					PerChannelQueue.logger.error("Unexpected processing failure", e);
+					break;
+				}
+			}
+
+			if (!forever) {
+				PerChannelQueue.logger.info("connection queue closing");
 			}
 		}
 
-		if (!forever) {
-			PerChannelQueue.logger.info("connection queue closing");
+		//method to place a request of job processing on Job Manager
+		public void addJobToQueue(Management jobReq){
+			JobManager.getInstance().submitJobProposal(sq, jobReq);
+		}
+
+		public void putBidResponse(JobBid bidReq){
+			Queue<JobBid> bidResponse = new LinkedBlockingDeque<JobBid>();
+			
+			if(bidResponse.isEmpty()){
+				bidResponse.add(bidReq);
+				
+			}
+			
+			else
+			{
+				int bidWeight = bidReq.getBid();
+				long sendReqtoNode = bidReq.getOwnerId();
+				logger.info("Bid received for serving the request from the node : "+sendReqtoNode);
+				logger.info("Now sending the Job proposal request to the node for processing..! ");
+				
+				//JobProposal newProposal = new JobProposal();
+				
+				
+			}
+			
+		}
+
+	}
+
+	public class WriteListener implements ChannelFutureListener {
+		private ChannelQueue sq;
+
+		public WriteListener(ChannelQueue sq) {
+			this.sq = sq;
+		}
+
+		@Override
+		public void operationComplete(ChannelFuture future) throws Exception {
+			logger.info("Write complete");
+			logger.info("isSuccess: " +future.isSuccess());
+			logger.info("Cause: " + future.cause());
+			//sq.shutdown(true);
 		}
 	}
 
-		//method to place a request of job processing on Job Manager
-	public void addJobToQueue(Management jobReq){
-		
-		JobManager.getInstance().submitJobProposal(sq, jobReq);
+	public class CloseListener implements ChannelFutureListener {
+		private ChannelQueue sq;
+
+		public CloseListener(ChannelQueue sq) {
+			this.sq = sq;
+		}
+
+		@Override
+		public void operationComplete(ChannelFuture future) throws Exception {
+			sq.shutdown(true);
+		}
 	}
-}
-
-public class WriteListener implements ChannelFutureListener {
-	private ChannelQueue sq;
-
-	public WriteListener(ChannelQueue sq) {
-		this.sq = sq;
-	}
-
-	@Override
-	public void operationComplete(ChannelFuture future) throws Exception {
-		logger.info("Write complete");
-		logger.info("isSuccess: " +future.isSuccess());
-		logger.info("Cause: " + future.cause());
-		//sq.shutdown(true);
-	}
-}
-
-public class CloseListener implements ChannelFutureListener {
-	private ChannelQueue sq;
-
-	public CloseListener(ChannelQueue sq) {
-		this.sq = sq;
-	}
-
-	@Override
-	public void operationComplete(ChannelFuture future) throws Exception {
-		sq.shutdown(true);
-	}
-}
 }

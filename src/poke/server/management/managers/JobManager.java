@@ -29,7 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import poke.server.queue.PerChannelQueue;
-
+import poke.server.resources.ResourceFactory;
 import eye.Comm.JobBid;
 import eye.Comm.JobProposal;
 import eye.Comm.LeaderElection;
@@ -63,7 +63,7 @@ public class JobManager {
 		{
 			return jp;
 		}
-		
+
 	}
 	//Map that will hold PerChannelQueue reference and JobProposal with JobId until response is sent to PCQ
 	private Map<String,PCQandJob> queue_JobProposal = new HashMap<String,PCQandJob>();
@@ -111,7 +111,12 @@ public class JobManager {
 		sendResponse(jbreq);
 		return true;
 	}
-	
+
+	/**
+	 * If a bid is received from a node, forward the bid request unchanged 
+	 * If I am a leader, add the bidding to my Queue
+	 * @param mreq
+	 */
 	public void sendResponse(Management mreq)
 	{
 		for (HeartbeatData hd : HeartbeatManager.getInstance()
@@ -137,7 +142,6 @@ public class JobManager {
 	 *            The proposal
 	 */
 	public void processRequest(JobProposal req) {
-		//TODO need to check is node id and proposal id is same, remove request, else bid and forward
 		if(isLeader())
 		{
 			//do nothing
@@ -152,6 +156,7 @@ public class JobManager {
 			logger.info("Job ID Received : " + req.getJobId());
 			logger.info("I start to bid for the job..!");
 			startJobBidding(nodeId, req.getOwnerId(), req.getJobId());
+			//TODO forward proposal request too
 		}
 	}
 
@@ -163,14 +168,14 @@ public class JobManager {
 	 */
 	public void processRequest(JobBid req) {
 		//If I am the leader, process Job Bid else forward
-		
+
 		if (req == null) {
 			logger.info("No job bidding request received..!");
 			return;
 		} else {
 			logger.info("Job bidding request received on channel..!");
 		}
-		
+
 		if(isLeader())
 		{
 			queue_JobBid.add(req);
@@ -198,7 +203,9 @@ public class JobManager {
 				// sending job proposal request for bidding
 				JobBid.Builder jb = JobBid.newBuilder();
 				jb.setBid(5);
-				jb.setOwnerId(ownerId);
+				//set own node ID as the owner for this bid
+				long bidOwner = Long.parseLong(ResourceFactory.getInstance().getCfg().getServer().getProperty("node.id"));
+				jb.setOwnerId(bidOwner);
 				jb.setJobId(ljobId);
 
 				Management.Builder b = Management.newBuilder();
@@ -210,16 +217,23 @@ public class JobManager {
 			} catch (Exception e) {
 				logger.error(
 						"Failed  to send bidding request for " + hd.getNodeId()
-								+ " at " + hd.getHost(), e);
+						+ " at " + hd.getHost(), e);
 			}
 
 		}
 	}
 
+	/**
+	 * Class for receiving all the bids from all the nodes in the cluster.
+	 * If no bids are present in the job_bid queue, then Thread will wait.
+	 * Once all the bids are received from the nodes, the 
+	 * @author Chitra
+	 *
+	 */
 
 	protected class JobBidWorker extends Thread{
 		JobManager jobManager;
-		
+
 		public JobBidWorker(JobManager jm)
 		{
 			this.jobManager = jm;
@@ -227,7 +241,7 @@ public class JobManager {
 		public JobBid processJobBids(ArrayList<JobBid> jobBids)
 		{
 			JobBid finalJB = null;
-			
+
 			//find jobbid with highest weight
 			int size = jobBids.size();
 			for(int i = 0; i< size;i++)
@@ -272,6 +286,8 @@ public class JobManager {
 					}
 					else
 					{
+						//put it in hashmap with jobid and list of jobs //TBD time
+						//check if there are 3 entries //TBD or if time expires
 						ArrayList<JobBid> jobBids = jobManager.map_JobBid.get(jobId);
 						if(jobBids.size() >= 3)
 						{
@@ -289,14 +305,8 @@ public class JobManager {
 							jobManager.map_JobBid.put(jobId,jobBids);
 						}
 					}
-					
-					//TODO put it in hashmap with jobid and list of jobs //TBD time
-					//check if there are 3 entries //TBD or if time expires
-					
-					
+
 				}
-				
-				
 			}
 		}
 	}
