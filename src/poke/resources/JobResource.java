@@ -32,6 +32,37 @@ public class JobResource implements Resource {
 
 	protected static Logger logger = LoggerFactory.getLogger("server");
 	
+	public Integer NodeIdToInt(String nodeId)
+	{
+		Integer i_id = 0;
+		switch(nodeId){
+			case "zero" :
+				i_id = 0; break;
+			case "one" :
+				i_id = 1; break;
+			case "two" :
+				i_id = 2; break;
+			case "three" :
+				i_id =3; break;
+		}
+		return i_id;
+	}
+	public String IntToNodeId(Integer i_Id)
+	{
+		String nodeId = "";
+		switch(i_Id){
+			case 0 :
+				nodeId = "zero"; break;
+			case 1 :
+				nodeId = "one"; break;
+			case 2 :
+				nodeId = "two"; break;
+			case 3 :
+				nodeId = "three"; break;
+		}
+		return nodeId;
+	}
+	
 	@Override
 	public Request process(Request request) {
 		// TODO Auto-generated method stub
@@ -71,7 +102,7 @@ public class JobResource implements Resource {
 		Management.Builder b = Management.newBuilder();
 		JobProposal.Builder jp = JobProposal.newBuilder();
 		jp.setJobId(request.getBody().getJobOp().getJobId());
-		jp.setOwnerId(Long.parseLong(nodeId));
+		jp.setOwnerId(NodeIdToInt(nodeId));
 		jp.setWeight(4);
 		
 		b.setJobPropose(jp);

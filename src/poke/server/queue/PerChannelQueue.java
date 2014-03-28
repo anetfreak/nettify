@@ -33,9 +33,12 @@ import poke.server.resources.ResourceUtil;
 
 import com.google.protobuf.GeneratedMessage;
 
+import eye.Comm.Header;
 import eye.Comm.JobBid;
+import eye.Comm.JobOperation;
 import eye.Comm.JobProposal;
 import eye.Comm.Management;
+import eye.Comm.Payload;
 import eye.Comm.PokeStatus;
 import eye.Comm.Request;
 
@@ -62,6 +65,8 @@ public class PerChannelQueue implements ChannelQueue {
 	private LinkedBlockingDeque<com.google.protobuf.GeneratedMessage> inbound;
 	private LinkedBlockingDeque<com.google.protobuf.GeneratedMessage> outbound;
 
+	private Queue<JobBid> bidResponse = new LinkedBlockingDeque<JobBid>();
+
 	// This implementation uses a fixed number of threads per channel
 	private OutboundWorker oworker;
 	private InboundWorker iworker;
@@ -72,6 +77,37 @@ public class PerChannelQueue implements ChannelQueue {
 	protected PerChannelQueue(Channel channel) {
 		this.channel = channel;
 		init();
+	}
+
+	public Integer NodeIdToInt(String nodeId)
+	{
+		Integer i_id = 0;
+		switch(nodeId){
+		case "zero" :
+			i_id = 0; break;
+		case "one" :
+			i_id = 1; break;
+		case "two" :
+			i_id = 2; break;
+		case "three" :
+			i_id =3; break;
+		}
+		return i_id;
+	}
+	public String IntToNodeId(Integer i_Id)
+	{
+		String nodeId = "";
+		switch(i_Id){
+		case 0 :
+			nodeId = "zero"; break;
+		case 1 :
+			nodeId = "one"; break;
+		case 2 :
+			nodeId = "two"; break;
+		case 3 :
+			nodeId = "three"; break;
+		}
+		return nodeId;
 	}
 
 	protected void init() {
@@ -227,6 +263,10 @@ public class PerChannelQueue implements ChannelQueue {
 		PerChannelQueue sq;
 		boolean forever = true;
 
+		//variable to store the jobOperation request
+		Request reqOperation;
+
+
 		public InboundWorker(ThreadGroup tgrp, int workerId, PerChannelQueue sq) {
 			super(tgrp, "inbound-" + workerId);
 			this.workerId = workerId;
@@ -275,9 +315,12 @@ public class PerChannelQueue implements ChannelQueue {
 						//if the request is for serving a job - pass the request to job manager as jobProposal
 						if(req.getHeader().getRoutingId().getNumber() == 13)
 						{
-							//							reply = rsc.process(req);
+							//reply = rsc.process(req);
+							reqOperation = req;
 							Management mgmt = rsc.processMgmtRequest(req);
 							addJobToQueue(mgmt);
+							JobBid bidReq = waitForBid();
+							createJobOperation(bidReq);
 						}
 						else
 						{
@@ -304,29 +347,71 @@ public class PerChannelQueue implements ChannelQueue {
 			JobManager.getInstance().submitJobProposal(sq, jobReq);
 		}
 
-		public void putBidResponse(JobBid bidReq){
-			Queue<JobBid> bidResponse = new LinkedBlockingDeque<JobBid>();
-			
-			if(bidResponse.isEmpty()){
-				bidResponse.add(bidReq);
-				
-			}
-			
-			else
+
+
+		public JobBid waitForBid(){
+			while(true)
 			{
-				int bidWeight = bidReq.getBid();
-				long sendReqtoNode = bidReq.getOwnerId();
-				logger.info("Bid received for serving the request from the node : "+sendReqtoNode);
-				logger.info("Now sending the Job proposal request to the node for processing..! ");
-				
-				//JobProposal newProposal = new JobProposal();
-				
-				
+				if(bidResponse.isEmpty())
+				{
+					try {
+						this.sleep(200);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				return bidResponse.remove();
 			}
-			
+		}
+
+		public Request createJobOperation(JobBid bidReq){
+
+			int recNode = (int) (bidReq.getOwnerId());
+			String sendReqtoNode = IntToNodeId(recNode);
+			String myNodeId = ResourceFactory.getInstance().getCfg().getServer().getProperty("node.id");
+			logger.info("Adding the bid to my own queue and forwarding the job proposal to the respective node");
+			logger.info("Bid received for serving the request from the node : "+sendReqtoNode);
+
+			//modifying the joboperation header and payload - sending the message to the node which has won the bid
+			Request jobOpRequest = reqOperation;
+
+			JobOperation.Builder j = JobOperation.newBuilder();
+			j.setAction(jobOpRequest.getBody().getJobOp().getAction());
+			j.setJobId(jobOpRequest.getBody().getJobOp().getJobId());
+			j.setData(jobOpRequest.getBody().getJobOp().getData());
+
+			//payload containing data for job
+			Request.Builder r = Request.newBuilder();
+			eye.Comm.Payload.Builder p = Payload.newBuilder();
+			p.setJobOp(j.build());
+			r.setBody(p.build());
+
+			//header with routing info
+			Header.Builder h = Header.newBuilder();
+			h.setOriginator(myNodeId);
+			h.setTag(jobOpRequest.getHeader().getTag());
+			h.setTime(jobOpRequest.getHeader().getTime());
+			h.setRoutingId(jobOpRequest.getHeader().getRoutingId());
+			h.setToNode(sendReqtoNode);
+
+			r.setHeader(h.build());
+			Request req = r.build();
+
+			return req;
 		}
 
 	}
+
+	/**
+	 * If a response is received after bidding is done, forward the job operation request
+	 * to the server which has sent the bid
+	 * @param bidReq
+	 */
+	public void putBidResponse(JobBid bidReq){
+		bidResponse.add(bidReq);
+	}
+
 
 	public class WriteListener implements ChannelFutureListener {
 		private ChannelQueue sq;
