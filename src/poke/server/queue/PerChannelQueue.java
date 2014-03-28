@@ -34,6 +34,7 @@ import poke.server.resources.ResourceUtil;
 import com.google.protobuf.GeneratedMessage;
 
 import eye.Comm.Header;
+import eye.Comm.Header.Routing;
 import eye.Comm.JobBid;
 import eye.Comm.JobOperation;
 import eye.Comm.JobProposal;
@@ -313,7 +314,7 @@ public class PerChannelQueue implements ChannelQueue {
 						} 
 
 						//if the request is for serving a job - pass the request to job manager as jobProposal
-						if(req.getHeader().getRoutingId().getNumber() == 13)
+						if(req.getHeader().getRoutingId().getNumber() == Routing.JOBS.getNumber())
 						{
 							//reply = rsc.process(req);
 							reqOperation = req;
