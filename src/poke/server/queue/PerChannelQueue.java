@@ -345,6 +345,7 @@ public class PerChannelQueue implements ChannelQueue {
 
 		//method to place a request of job processing on Job Manager
 		public void addJobToQueue(Management jobReq){
+			logger.info("Job Bid at PCQ added to queue");
 			JobManager.getInstance().submitJobProposal(sq, jobReq);
 		}
 
@@ -360,6 +361,7 @@ public class PerChannelQueue implements ChannelQueue {
 						e.printStackTrace();
 					}
 			}
+			logger.info("PCQ recieved a response for Job Proposal");
 			return bidResponse.remove();
 		}
 

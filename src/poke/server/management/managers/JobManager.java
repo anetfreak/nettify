@@ -329,10 +329,11 @@ public class JobManager {
 						ArrayList<JobBid> jobBids = jobManager.map_JobBid.get(jobId);
 						if(jobBids.size() >= 2)
 						{
+							logger.info("Selected one bid, sending it to PCQ");
 							//remove and process and send response
 							JobBid finalJB = processJobBids(jobBids);
 							PerChannelQueue pcq = jobManager.queue_JobProposal.get(jobId).getPCQ();
-							//TOTO pcq.putBidResponse(finalJB);
+							pcq.putBidResponse(finalJB);
 							jobManager.queue_JobProposal.remove(jobId);
 							jobManager.map_JobBid.remove(jobId);
 							jobBids = null;
