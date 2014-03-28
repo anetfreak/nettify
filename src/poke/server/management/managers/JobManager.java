@@ -76,6 +76,37 @@ public class JobManager {
 	private Map<String,Long> map_JobIdToTime = new HashMap<String,Long>();
 	private String nodeId;
 
+	public Integer NodeIdToInt(String nodeId)
+	{
+		Integer i_id = 0;
+		switch(nodeId){
+			case "zero" :
+				i_id = 0; break;
+			case "one" :
+				i_id = 1; break;
+			case "two" :
+				i_id = 2; break;
+			case "three" :
+				i_id =3; break;
+		}
+		return i_id;
+	}
+	public String IntToNodeId(Integer i_Id)
+	{
+		String nodeId = "";
+		switch(i_Id){
+			case 0 :
+				nodeId = "zero"; break;
+			case 1 :
+				nodeId = "one"; break;
+			case 2 :
+				nodeId = "two"; break;
+			case 3 :
+				nodeId = "three"; break;
+		}
+		return nodeId;
+	}
+	
 	public static JobManager getInstance(String id) {
 		instance.compareAndSet(null, new JobManager(id));
 		return instance.get();
@@ -209,8 +240,8 @@ public class JobManager {
 				JobBid.Builder jb = JobBid.newBuilder();
 				jb.setBid(5);
 				//set own node ID as the owner for this bid
-				long bidOwner = Long.parseLong(ResourceFactory.getInstance().getCfg().getServer().getProperty("node.id"));
-				jb.setOwnerId(bidOwner);
+				String bidOwner = ResourceFactory.getInstance().getCfg().getServer().getProperty("node.id");
+				jb.setOwnerId(NodeIdToInt(bidOwner));
 				jb.setJobId(ljobId);
 
 				Management.Builder b = Management.newBuilder();
