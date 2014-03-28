@@ -332,6 +332,7 @@ public class JobManager {
 						{
 							logger.info("Selected one bid, sending it to PCQ");
 							//remove and process and send response
+							jobBids.add(req);
 							JobBid finalJB = processJobBids(jobBids);
 							PerChannelQueue pcq = jobManager.queue_JobProposal.get(jobId).getPCQ();
 							pcq.putBidResponse(finalJB);
