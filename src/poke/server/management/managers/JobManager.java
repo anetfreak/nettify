@@ -156,7 +156,10 @@ public class JobManager {
 			logger.info("Job ID Received : " + req.getJobId());
 			logger.info("I start to bid for the job..!");
 			startJobBidding(nodeId, req.getOwnerId(), req.getJobId());
-			//TODO forward proposal request too
+			//forward proposal request too
+			Management.Builder b = Management.newBuilder();
+			b.setJobPropose(req);
+			sendResponse(b.build());
 		}
 	}
 
