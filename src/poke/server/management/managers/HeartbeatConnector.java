@@ -110,6 +110,20 @@ public class HeartbeatConnector extends Thread {
 		return nodeId;
 	}
 			
+	private void checkIfLeaderDown(int Leader, int nextNode, int myNode)
+	{
+		logger.info("Leader: "+ Leader + " NextNode:" + nextNode + " MyNode: " + myNode);
+		if(Leader > myNode)
+		{
+			if(nextNode > Leader || nextNode < myNode)
+				ElectionManager.getInstance().setStatus(VoteAction.ELECTION);
+		}
+		else if(Leader < myNode)
+		{
+			if(nextNode > Leader && nextNode < myNode)
+				ElectionManager.getInstance().setStatus(VoteAction.ELECTION);
+		}
+	}
 	
 	@Override
 	public void run() {
@@ -155,6 +169,8 @@ public class HeartbeatConnector extends Thread {
 										//checking is leader is down and redo election if so
 										if(currentNode == NodeIdToInt(ElectionManager.getLeader()))
 										{
+											checkIfLeaderDown(currentNode, nextNode, NodeIdToInt(nodeId));
+											/*
 											if(currentNode < NodeIdToInt(nodeId))
 											{
 												if(nextNode < currentNode)
@@ -171,6 +187,7 @@ public class HeartbeatConnector extends Thread {
 													ElectionManager.getInstance().setStatus(VoteAction.ELECTION);
 												}
 											}
+											*/
 										}
 										logger.info("1. Switching from "+ currentNode + " ==> "+nextNode);
 										logger.info("Disconnecting from Node: " + map_monitors.get(currentNode).getNodeInfo());
