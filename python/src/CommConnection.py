@@ -24,7 +24,11 @@ class CommConnection():
         try:
             #Create the eventLoopGroup and the channel
             self.handler = CommHandler()
-            bootstrap = Bootstrap().group(group).channel(NioSocketChannel).handler(self.handler).option(ChannelOption.TCP_NODELAY, True).option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+            bootstrap = Bootstrap().group(group).channel(NioSocketChannel).handler(self.handler)
+            bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS,10000)
+            bootstrap.option(ChannelOption.TCP_NODELAY, True)
+            bootstrap.option(ChannelOption.SO_KEEPALIVE, True) 
+            #bootstrap.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
             channel = bootstrap.connect(host, port).syncUninterruptibly()
             channel.awaitUninterruptibly(2000)
             if channel is None:
@@ -42,7 +46,8 @@ class CommConnection():
             self.handler.setChannel(channel.channel())
             
         finally:
-            group.shutdownGracefully()
+            print "finally!!"
+            #group.shutdownGracefully()
     
     def poke(self):
         ping = Ping.newBuilder()
