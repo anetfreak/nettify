@@ -295,7 +295,7 @@ public class JobManager {
 			int size = jobBids.size();
 			for(int i = 0; i< size;i++)
 			{
-				JobBid jb = jobBids.remove(i);
+				JobBid jb = jobBids.remove(0);
 				if(finalJB == null)
 				{
 					finalJB = jb;
@@ -308,6 +308,7 @@ public class JobManager {
 					}
 				}
 			}
+			logger.info("The highest selected bid is : "+finalJB.getBid());
 			return finalJB;
 		}
 		@Override

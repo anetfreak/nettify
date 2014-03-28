@@ -91,7 +91,7 @@ public class JobResource implements Resource {
 		// TODO Auto-generated method stub
 		//the request received is a job serving request
 		
-		logger.info("Creating a job processing request ..! "+request.getBody().getJobOp().getJobId());
+		logger.info("Creating a job processing request ..! "+request.getBody().getJobOp().getData().getJobId());
 
 		String nodeId = ResourceFactory.getInstance().getCfg().getServer().getProperty("node.id");
 		Request.Builder rb = Request.newBuilder();
@@ -101,7 +101,8 @@ public class JobResource implements Resource {
 		// payload
 		Management.Builder b = Management.newBuilder();
 		JobProposal.Builder jp = JobProposal.newBuilder();
-		jp.setJobId(request.getBody().getJobOp().getJobId());
+		
+		jp.setJobId(request.getBody().getJobOp().getData().getJobId());
 		jp.setOwnerId(NodeIdToInt(nodeId));
 		if(request.getBody().getJobOp().getData().hasNameSpace())
 			jp.setNameSpace(request.getBody().getJobOp().getData().getNameSpace());
