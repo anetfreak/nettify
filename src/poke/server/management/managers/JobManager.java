@@ -34,7 +34,8 @@ import eye.Comm.JobBid;
 import eye.Comm.JobProposal;
 import eye.Comm.LeaderElection;
 import eye.Comm.Management;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * The job manager class is used by the system to assess and vote on a job. This
  * is used to ensure leveling of the servers take into account the diversity of
@@ -107,6 +108,7 @@ public class JobManager {
 	 */
 	public synchronized boolean submitJobProposal(PerChannelQueue sq, Management jbreq) {
 		//get jobId and store
+		logger.info("Chitra ka Job Proposal recieved, sending to channel");
 		queue_JobProposal.put(jbreq.getJobPropose().getJobId(), new PCQandJob(sq,jbreq));
 		sendResponse(jbreq);
 		return true;
