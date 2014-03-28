@@ -26,18 +26,18 @@ class CommConnection():
             self.handler = CommHandler()
             bootstrap = Bootstrap().group(group).channel(NioSocketChannel).handler(self.handler).option(ChannelOption.TCP_NODELAY, True).option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
             channel = bootstrap.connect(host, port).syncUninterruptibly()
-            channel.awaitUninterruptibly(2000);
+            channel.awaitUninterruptibly(2000)
             if channel is None:
                 print "Could not connect to the Server"
             else:
                 print "Channel created" 
             
-            pipeline = channel.channel().pipeline();
-            pipeline.addLast("frameDecoder", LengthFieldBasedFrameDecoder(67108864, 0, 4, 0, 4));
-            pipeline.addLast("protobufDecoder", ProtobufDecoder(Request.getDefaultInstance()));
-            pipeline.addLast("frameEncoder", LengthFieldPrepender(4));
-            pipeline.addLast("protobufEncoder", ProtobufEncoder());    
-            pipeline.addLast("handler", CommHandler());
+            pipeline = channel.channel().pipeline()
+            pipeline.addLast("frameDecoder", LengthFieldBasedFrameDecoder(67108864, 0, 4, 0, 4))
+            pipeline.addLast("protobufDecoder", ProtobufDecoder(Request.getDefaultInstance()))
+            pipeline.addLast("frameEncoder", LengthFieldPrepender(4))
+            pipeline.addLast("protobufEncoder", ProtobufEncoder())    
+            pipeline.addLast("handler", CommHandler())
             
             self.handler.setChannel(channel.channel())
             
