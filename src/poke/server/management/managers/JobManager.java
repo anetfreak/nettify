@@ -117,12 +117,14 @@ public class JobManager {
 	}
 
 	public JobManager(String nodeId) {
+		logger.info("@@@@@@@@@@@Job Manager Created@@@@@@@@@@@@");
 		this.nodeId = nodeId;
 		init();
 	}
 	protected void init()
 	{
 		//if(isLeader())
+		logger.info("Job Manager Initialized");
 			(new JobBidWorker(this)).start();
 	}
 
