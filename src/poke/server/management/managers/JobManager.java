@@ -325,7 +325,7 @@ public class JobManager {
 						//put it in hashmap with jobid and list of jobs //TBD time
 						//check if there are 3 entries //TBD or if time expires
 						ArrayList<JobBid> jobBids = jobManager.map_JobBid.get(jobId);
-						if(jobBids.size() >= 3)
+						if(jobBids.size() >= 2)
 						{
 							//remove and process and send response
 							JobBid finalJB = processJobBids(jobBids);
