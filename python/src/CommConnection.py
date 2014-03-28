@@ -3,7 +3,7 @@ import sys
 sys.path.append("netty-all-4.0.15.Final.jar")
 sys.path.append("protobuf-java-2.5.0.jar")
 
-from eye.Comm import Request, Header, Payload, RoutingPath, Ping
+from eye.Comm import Request, Header, Payload, RoutingPath, Ping, JobOperation
 from com.google.protobuf import GeneratedMessage
 from io.netty.bootstrap import Bootstrap, ChannelFactory
 from io.netty.buffer import PooledByteBufAllocator, Unpooled
@@ -44,14 +44,15 @@ class CommConnection():
             pipeline.addLast("handler", CommHandler())
             
             self.handler.setChannel(channel.channel())
-            
+        except:
+            print sys.exc_info()[0]
         finally:
             print "finally!!"
             #group.shutdownGracefully()
     
     def poke(self):
         ping = Ping.newBuilder()
-        ping.setTag("test")
+        ping.setTag("test poke")
         ping.setNumber(5)
         
         #Payload
@@ -65,6 +66,31 @@ class CommConnection():
         h.setOriginator("client")
         h.setTag("test finger")
         h.setRoutingId(Header.Routing.PING)
+        r.setHeader(h.build())
+
+        req = r.build()
+        self.handler.send(req)
+        
+    def jobrequest(self):
+        ping = Ping.newBuilder()
+        ping.setTag("test job")
+        ping.setNumber(5)
+        
+        jobOp = JobOperation.newBuilder()
+        jobOp.setAction(JobOperation.JobAction.LISTJOBS)
+        
+        #Payload
+        r = Request.newBuilder()
+        p = Payload.newBuilder()
+        p.setPing(ping.build())
+        p.setJobOp(jobOp.build())
+        r.setBody(p.build())
+
+        #header with routing info
+        h = Header.newBuilder()
+        h.setOriginator("client")
+        h.setTag("test finger")
+        h.setRoutingId(Header.Routing.JOBS)
         r.setHeader(h.build())
 
         req = r.build()
