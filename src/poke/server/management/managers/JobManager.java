@@ -188,7 +188,8 @@ public class JobManager {
 			logger.info("Owner of the Job Proposal : " + req.getOwnerId());
 			logger.info("Job ID Received : " + req.getJobId());
 			logger.info("I start to bid for the job..!");
-			startJobBidding(nodeId, req.getOwnerId(), req.getJobId());
+			//startJobBidding(nodeId, req.getOwnerId(), req.getJobId());
+			startJobBidding(req);
 			//forward proposal request too
 			Management.Builder b = Management.newBuilder();
 			b.setJobPropose(req);
@@ -227,8 +228,8 @@ public class JobManager {
 	/**
 	 * Custom method for bidding for the proposed job
 	 */
-	public void startJobBidding(String lnodeId, long ownerId, String ljobId) {
-
+	public void startJobBidding(JobProposal jpReq) {
+		
 		for (HeartbeatData hd : HeartbeatManager.getInstance()
 				.getOutgoingQueue_test().values()) {
 			logger.info("Job proposal request on (" + nodeId + ") sent to "
@@ -242,7 +243,8 @@ public class JobManager {
 				//set own node ID as the owner for this bid
 				String bidOwner = ResourceFactory.getInstance().getCfg().getServer().getProperty("node.id");
 				jb.setOwnerId(NodeIdToInt(bidOwner));
-				jb.setJobId(ljobId);
+				jb.setJobId(jpReq.getJobId());
+				jb.setNameSpace(jpReq.getNameSpace());
 
 				Management.Builder b = Management.newBuilder();
 				b.setJobBid(jb);
