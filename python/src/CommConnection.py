@@ -3,7 +3,7 @@ import sys
 sys.path.append("netty-all-4.0.15.Final.jar")
 sys.path.append("protobuf-java-2.5.0.jar")
 
-from eye.Comm import Request, Header, Payload, RoutingPath, Ping, JobOperation
+from eye.Comm import Request, Header, Payload, RoutingPath, Ping, JobOperation, JobDesc
 from com.google.protobuf import GeneratedMessage
 from io.netty.bootstrap import Bootstrap, ChannelFactory
 from io.netty.buffer import PooledByteBufAllocator, Unpooled
@@ -79,10 +79,18 @@ class CommConnection():
         jobOp = JobOperation.newBuilder()
         jobOp.setAction(JobOperation.JobAction.LISTJOBS)
         
+        jobDesc = JobDesc.newBuilder()
+        jobDesc.setNameSpace("namespace")
+        jobDesc.setOwnerId(0)
+        jobDesc.setJobId("zero")
+        jobDesc.setStatus(JobDesc.JobCode.JOBUNKNOWN)
+        
+        
         #Payload
         r = Request.newBuilder()
         p = Payload.newBuilder()
         p.setPing(ping.build())
+        jobOp.setData(jobDesc.build())
         p.setJobOp(jobOp.build())
         r.setBody(p.build())
 
