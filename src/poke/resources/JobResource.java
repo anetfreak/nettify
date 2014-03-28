@@ -103,6 +103,10 @@ public class JobResource implements Resource {
 		JobProposal.Builder jp = JobProposal.newBuilder();
 		jp.setJobId(request.getBody().getJobOp().getJobId());
 		jp.setOwnerId(NodeIdToInt(nodeId));
+		if(request.getBody().getJobOp().getData().hasNameSpace())
+			jp.setNameSpace(request.getBody().getJobOp().getData().getNameSpace());
+		else
+			jp.setNameSpace("default");
 		jp.setWeight(4);
 		
 		b.setJobPropose(jp);
