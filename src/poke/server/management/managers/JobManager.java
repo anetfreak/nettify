@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 public class JobManager {
 	protected static Logger logger = LoggerFactory.getLogger("management");
 	protected static AtomicReference<JobManager> instance = new AtomicReference<JobManager>();
+	JobBidWorker jbworkerThread = null;
 	private class PCQandJob
 	{
 		private PerChannelQueue pcq;
@@ -124,8 +125,7 @@ public class JobManager {
 	protected void init()
 	{
 		//if(isLeader())
-		logger.info("Job Manager Initialized");
-			(new JobBidWorker(this)).start();
+			//(new JobBidWorker(this)).start();
 	}
 
 	public boolean isLeader()
@@ -217,7 +217,16 @@ public class JobManager {
 
 		if(isLeader())
 		{
-			queue_JobBid.add(req);
+			if(jbworkerThread == null)
+			{
+				jbworkerThread = new JobBidWorker(this);
+				jbworkerThread.start();
+			}
+			else if(!jbworkerThread.isAlive())
+			{
+				jbworkerThread.start();
+			}
+				queue_JobBid.add(req);
 		}
 		else
 		{
