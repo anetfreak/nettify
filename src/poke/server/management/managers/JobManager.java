@@ -17,7 +17,6 @@
 package poke.server.management.managers;
 
 import io.netty.channel.Channel;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -32,7 +31,6 @@ import poke.server.queue.PerChannelQueue;
 import poke.server.resources.ResourceFactory;
 import eye.Comm.JobBid;
 import eye.Comm.JobProposal;
-import eye.Comm.LeaderElection;
 import eye.Comm.Management;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -170,8 +168,7 @@ public class JobManager {
 	}
 
 	/**
-	 * a new job proposal has been sent out that I need to evaluate if I can run
-	 * it
+	 * Chitra : a new job proposal has been sent out that I need to evaluate if I can run it
 	 * 
 	 * @param req
 	 *            The proposal
@@ -250,7 +247,12 @@ public class JobManager {
 			try {
 				// sending job proposal request for bidding
 				JobBid.Builder jb = JobBid.newBuilder();
-				jb.setBid(5);
+				
+				//setting the bid randomly
+				int min = 1, max = 10;
+				int bid = min + (int)(Math.random() * ((max - min) + 1));
+				jb.setBid(bid);
+				
 				//set own node ID as the owner for this bid
 				String bidOwner = ResourceFactory.getInstance().getCfg().getServer().getProperty("node.id");
 				jb.setOwnerId(NodeIdToInt(bidOwner));
@@ -276,7 +278,7 @@ public class JobManager {
 	 * Class for receiving all the bids from all the nodes in the cluster.
 	 * If no bids are present in the job_bid queue, then Thread will wait.
 	 * Once all the bids are received from the nodes, the 
-	 * @author Chitra
+	 * @author Amit
 	 *
 	 */
 
