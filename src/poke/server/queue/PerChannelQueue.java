@@ -351,19 +351,16 @@ public class PerChannelQueue implements ChannelQueue {
 
 
 		public JobBid waitForBid(){
-			while(true)
+			while(bidResponse.isEmpty())
 			{
-				if(bidResponse.isEmpty())
-				{
 					try {
 						this.sleep(200);
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-				}
-				return bidResponse.remove();
 			}
+			return bidResponse.remove();
 		}
 
 		public Request createJobOperation(JobBid bidReq){
