@@ -122,7 +122,7 @@ public class JobManager {
 	}
 	protected void init()
 	{
-		if(isLeader())
+		//if(isLeader())
 			(new JobBidWorker(this)).start();
 	}
 
@@ -301,8 +301,10 @@ public class JobManager {
 		}
 		@Override
 		public void run() {
+			logger.info("Job bid worker started");
 			while(true && isLeader())
 			{
+				logger.info("Job Bid worker running..!!");
 				if(jobManager.queue_JobBid.isEmpty())
 				{
 					//TODO can check for time here
