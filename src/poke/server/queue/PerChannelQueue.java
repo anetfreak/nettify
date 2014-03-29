@@ -338,9 +338,11 @@ public class PerChannelQueue implements ChannelQueue {
 						}
 						// if the request is for serving a job - pass the
 						// request to job manager as jobProposal
-						if (req.getHeader().getRoutingId().getNumber() == Routing.JOBS.getNumber()) {
+						if (req.getHeader().getRoutingId().getNumber() == Routing.JOBS.getNumber()) 
+						{
 							if (req.getBody().hasJobOp()) {
 								if (isLeader()) {
+									logger.info("Received a JobOp request .. I am the leader.. Forwarding the request");
 									reqOperation = req;
 									Management mgmt = rsc
 											.processMgmtRequest(req);
@@ -350,11 +352,13 @@ public class PerChannelQueue implements ChannelQueue {
 									JobOpManager.getInstance().submitJobOperation(sq, result);
 								} 
 								else {
+									logger.info("Received a JobOperation request . Checking if the request is for me.");
 									// Check if I have to handle the request
 									if (req.getHeader().getToNode().equals(getMyNode())) {
 										// access the database, do the operation
 										// sending the job desc object to the DB
 										try {
+											logger.info("My bidding was highest.. This JobOp request is for me.. Processing it..");
 											Boolean b = storage
 													.addJob(req.getBody()
 															.getJobOp().getData()
@@ -373,20 +377,24 @@ public class PerChannelQueue implements ChannelQueue {
 										// send to network,
 										// TODO submitJobStatus(Request jobstatusreq)
 									} else {
+										logger.info("I do not have to serve this JobOp request. Forwarding it..");
 										// Forward the Job for other node tohandle
 										JobOpManager.getInstance().sendResponse(req);
 									}
 								}
 							} else if (req.getBody().hasJobStatus()) {
 								if (isLeader()) {
+									logger.info("Received a JobStatus request.. I am the leader.. Sending it to the client");
 									// add to outbound queue, write to client
 									sq.enqueueResponse(req, null);
 								} else {
+									logger.info("Received a JobStatus request.. Forwarding it till it reaches the leader..");
 									// send to next node
 									JobOpManager.getInstance().submitJobStatus(req);
 								}
 							}
-						} else {
+						} 
+						else {
 							// handle it locally
 							reply = rsc.process(req);
 							sq.enqueueResponse(reply, null);

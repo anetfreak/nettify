@@ -31,7 +31,7 @@ import com.google.protobuf.GeneratedMessage;
 
 import eye.Comm.Request;
 
-public class ServerConnection extends Thread {
+public class ServerConnection {
 	protected static Logger logger = LoggerFactory.getLogger("ServerConnection");
 	private String host;
 	private int port;
@@ -52,13 +52,13 @@ public class ServerConnection extends Thread {
 	}
 	
 	
-
 	public void release() {
 		group.shutdownGracefully();
 	}
 
 	public void sendMessage(Request req) throws Exception {
 		// enqueue message
+		logger.info("Received the JobOperation in ServerConnection");
 		outbound.put(req);
 	}
 
@@ -159,7 +159,7 @@ public class ServerConnection extends Thread {
 				if (!forever && conn.outbound.size() == 0)
 					break;
 				//Check if connection to next node changed, if yes then connect to new neighbour
-				checkandChangeConn();
+				conn.checkandChangeConn();
 				ch = conn.connect();
 				if (ch == null || !ch.isOpen()) {
 					ServerConnection.logger.error("connection missing, no outbound communication");

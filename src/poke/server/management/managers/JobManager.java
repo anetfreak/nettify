@@ -324,7 +324,7 @@ public class JobManager {
 			logger.info("Job bid worker started");
 			while(true && isLeader())
 			{
-				logger.info("Job Bid worker running..!!");
+				//logger.info("Job Bid worker running..!!");
 				if(jobManager.queue_JobBid.isEmpty())
 				{
 					//TODO can check for time here

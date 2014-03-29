@@ -138,6 +138,7 @@ public class JobOpManager {
 	{
 		//Send Message to ServerConnection
 		try{
+			logger.info("Inside JobOpManager.. Forwarding the request to ServerConncection");
 			serverConn.sendMessage(jOpReq);
 		}catch(Exception e)
 		{
