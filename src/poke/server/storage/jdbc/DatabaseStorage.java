@@ -20,6 +20,8 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
 
+import misc.MongoDao;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +44,9 @@ public class DatabaseStorage implements Storage {
 	protected Properties cfg;
 	protected BoneCP cpool;
 
-	protected DatabaseStorage() {
+	MongoDao mongodb = new MongoDao();
+	
+	public DatabaseStorage() {
 	}
 
 	public DatabaseStorage(Properties cfg) {
@@ -184,10 +188,17 @@ public class DatabaseStorage implements Storage {
 		return false;
 	}
 
+	/**
+	 * Adding a new JobOperation to the MongoDB - TESTING
+	 * @author Chitra
+	 */
 	@Override
 	public boolean addJob(String namespace, JobDesc job) {
 		// TODO Auto-generated method stub
-		return false;
+		if(mongodb.addJob(namespace, job))
+			return true;
+		else
+			return false;
 	}
 
 	@Override
