@@ -3,6 +3,7 @@ sys.path.append("netty-all-4.0.15.Final.jar")
 sys.path.append("protobuf-java-2.5.0.jar")
 from io.netty.channel import Channel, ChannelFuture, ChannelPipeline, SimpleChannelInboundHandler
 from eye.Comm import Request
+from CommListener import CommListener
 
 class CommHandler(SimpleChannelInboundHandler):
     
@@ -18,3 +19,6 @@ class CommHandler(SimpleChannelInboundHandler):
             print "In send ** Channel Handler** success"
             if cf.isDone() or cf.isSuccess():
                 print "Done!"
+
+#     def addListener(self, listener):
+        
