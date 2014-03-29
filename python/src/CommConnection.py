@@ -80,7 +80,7 @@ class CommConnection():
         jobOp.setAction(JobOperation.JobAction.LISTJOBS)
         
         jobDesc = JobDesc.newBuilder()
-        jobDesc.setNameSpace("namespace")
+        jobDesc.setNameSpace("engineering")
         jobDesc.setOwnerId(0)
         jobDesc.setJobId("zero")
         jobDesc.setStatus(JobDesc.JobCode.JOBUNKNOWN)
