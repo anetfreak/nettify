@@ -46,6 +46,7 @@ public class ServerConnection extends Thread {
 	private OutboundWorker worker;
 
 	public ServerConnection() {
+		outbound = new LinkedBlockingDeque<com.google.protobuf.GeneratedMessage>();
 		host = null;
 		port = 0;
 	}
@@ -59,7 +60,6 @@ public class ServerConnection extends Thread {
 	public void sendMessage(Request req) throws Exception {
 		// enqueue message
 		outbound.put(req);
-		outbound = new LinkedBlockingDeque<com.google.protobuf.GeneratedMessage>();
 	}
 
 	private void init() {
