@@ -30,12 +30,14 @@ import poke.server.management.managers.JobManager;
 import poke.server.resources.Resource;
 import poke.server.resources.ResourceFactory;
 import poke.server.resources.ResourceUtil;
+import poke.server.storage.jdbc.DatabaseStorage;
 
 import com.google.protobuf.GeneratedMessage;
 
 import eye.Comm.Header;
 import eye.Comm.Header.Routing;
 import eye.Comm.JobBid;
+import eye.Comm.JobDesc;
 import eye.Comm.JobOperation;
 import eye.Comm.JobProposal;
 import eye.Comm.Management;
@@ -263,6 +265,7 @@ public class PerChannelQueue implements ChannelQueue {
 		int workerId;
 		PerChannelQueue sq;
 		boolean forever = true;
+		DatabaseStorage storage = new DatabaseStorage();
 
 		//variable to store the jobOperation request
 		Request reqOperation;
@@ -321,7 +324,18 @@ public class PerChannelQueue implements ChannelQueue {
 							Management mgmt = rsc.processMgmtRequest(req);
 							addJobToQueue(mgmt);
 							JobBid bidReq = waitForBid();
-							createJobOperation(bidReq);
+							Request result = createJobOperation(bidReq);
+							//sending the job desc object to the DB
+							try{
+								Boolean b = storage.addJob(result.getBody().getJobOp().getData().getNameSpace(), result.getBody().getJobOp().getData());
+								if(b)
+									logger.info("Job desc added to the DB..");
+								else
+									logger.info("Job desc not added to the DB");
+							}
+							catch(Exception e){
+								logger.info("Exception encountered in persisiting to the DB : "+e);
+							}
 						}
 						else
 						{
@@ -354,12 +368,12 @@ public class PerChannelQueue implements ChannelQueue {
 		public JobBid waitForBid(){
 			while(bidResponse.isEmpty())
 			{
-					try {
-						this.sleep(200);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+				try {
+					this.sleep(200);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 			logger.info("PCQ recieved a response for Job Proposal");
 			return bidResponse.remove();
@@ -379,7 +393,15 @@ public class PerChannelQueue implements ChannelQueue {
 			JobOperation.Builder j = JobOperation.newBuilder();
 			j.setAction(jobOpRequest.getBody().getJobOp().getAction());
 			j.setJobId(jobOpRequest.getBody().getJobOp().getJobId());
-			j.setData(jobOpRequest.getBody().getJobOp().getData());
+
+			JobDesc.Builder desc = JobDesc.newBuilder();
+			desc.setNameSpace(jobOpRequest.getBody().getJobOp().getData().getNameSpace());
+			desc.setOwnerId(NodeIdToInt(myNodeId));
+			desc.setJobId(jobOpRequest.getBody().getJobOp().getData().getJobId());
+			desc.setStatus(jobOpRequest.getBody().getJobOp().getData().getStatus());
+			//desc.setOptions(value)
+			j.setData(desc);
+
 
 			//payload containing data for job
 			Request.Builder r = Request.newBuilder();
@@ -398,6 +420,7 @@ public class PerChannelQueue implements ChannelQueue {
 			r.setHeader(h.build());
 			Request req = r.build();
 
+			logger.info("New job operation request formed.. Sending it to the DB for persisting..!!");
 			return req;
 		}
 
