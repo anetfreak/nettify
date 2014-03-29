@@ -45,7 +45,7 @@ class CommConnection():
 #             pipeline.addLast()
             
             self.handler.setChannel(channel.channel())
-            self.handler.addListener(CommListener().onMessage(channel.read()))
+            self.handler.addListener(CommListener())
         except:
             print sys.exc_info()[0]
         finally:
