@@ -5,6 +5,9 @@ from eye.Comm import Request, Header, Payload, RoutingPath, Ping, JobOperation, 
         
 class CommListener():
     
+    def init(self):
+        self.id = "Listener"
+        
     def onMessage(self, msg):
         print "Inside onMessage"
         print "Printing Header of the message"
