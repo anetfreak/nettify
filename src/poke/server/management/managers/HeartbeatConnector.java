@@ -203,7 +203,7 @@ public class HeartbeatConnector extends Thread {
 										ElectionManager.setCurrentNode(IntToNodeId(currentNode));
 										logger.info("Now Current Node is " + currentNode);
 									}
-									if(IntToNodeId(currentNode).equals(ElectionManager.getCurrentNode()))
+									if(!IntToNodeId(currentNode).equals(ElectionManager.getCurrentNode()))
 										ElectionManager.setCurrentNode(IntToNodeId(currentNode));
 									break;
 								}
@@ -220,7 +220,7 @@ public class HeartbeatConnector extends Thread {
 									currentNode = nextNode;
 									ElectionManager.setCurrentNode(IntToNodeId(currentNode));
 								}
-								if(IntToNodeId(currentNode).equals(ElectionManager.getCurrentNode()))
+								if(!IntToNodeId(currentNode).equals(ElectionManager.getCurrentNode()))
 									ElectionManager.setCurrentNode(IntToNodeId(currentNode));
 								break;
 							}
@@ -239,7 +239,7 @@ public class HeartbeatConnector extends Thread {
 							currentNode = nextNode;
 							ElectionManager.setCurrentNode(IntToNodeId(currentNode));
 						}
-						if(IntToNodeId(currentNode).equals(ElectionManager.getCurrentNode()))
+						if(!IntToNodeId(currentNode).equals(ElectionManager.getCurrentNode()))
 								ElectionManager.setCurrentNode(IntToNodeId(currentNode));
 						break;
 					}
