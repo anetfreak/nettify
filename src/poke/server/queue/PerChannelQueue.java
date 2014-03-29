@@ -453,6 +453,7 @@ public class PerChannelQueue implements ChannelQueue {
 		 */
 		public void submitJobStatus(Request jobstatusreq)
 		{
+			logger.info("Pushing the request to the client channel..! In submitJobStatus()");
 			sq.enqueueResponse(jobstatusreq, null);
 		}
 		
@@ -470,6 +471,7 @@ public class PerChannelQueue implements ChannelQueue {
 				js.setStatus(PokeStatus.SUCCESS);
 			else
 				js.setStatus(PokeStatus.FAILURE);
+			
 			js.setJobState(JobCode.JOBRECEIVED);
 
 			// payload containing data for job
@@ -489,6 +491,7 @@ public class PerChannelQueue implements ChannelQueue {
 			r.setHeader(h.build());
 			Request req = r.build();
 		
+			logger.info("New Job reply status request formed.. Sending it back to the client");
 			return req;
 		}
 		public Request createJobOperation(JobBid bidReq) {
