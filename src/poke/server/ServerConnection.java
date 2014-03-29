@@ -199,11 +199,12 @@ public class ServerConnection {
 					} else
 						conn.outbound.putFirst(msg);
 				} catch (InterruptedException ie) {
-					break;
+					logger.error("Write Failure,ie");
+					//break;
 				} catch (Exception e) {
 					ServerConnection.logger.error(
 							"Unexpected communcation failure", e);
-					break;
+					//break;
 				}
 			}
 
