@@ -13,6 +13,7 @@ from io.netty.channel import Channel, ChannelPipeline, SimpleChannelInboundHandl
 from io.netty.handler.codec import LengthFieldBasedFrameDecoder, LengthFieldPrepender
 from io.netty.handler.codec.protobuf import ProtobufDecoder, ProtobufEncoder
 from CommHandler import CommHandler
+from CommListener import CommListener
 
 class CommConnection():
     
@@ -23,7 +24,8 @@ class CommConnection():
         group = NioEventLoopGroup()
         try:
             #Create the eventLoopGroup and the channel
-            self.handler = CommHandler()
+            listener = CommListener()
+            self.handler = CommHandler(listener)
             bootstrap = Bootstrap().group(group).channel(NioSocketChannel).handler(self.handler)
             bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS,10000)
             bootstrap.option(ChannelOption.TCP_NODELAY, True)
@@ -41,10 +43,10 @@ class CommConnection():
             pipeline.addLast("protobufDecoder", ProtobufDecoder(Request.getDefaultInstance()))
             pipeline.addLast("frameEncoder", LengthFieldPrepender(4))
             pipeline.addLast("protobufEncoder", ProtobufEncoder())    
-            pipeline.addLast("handler", CommHandler())
+            pipeline.addLast("handler", CommHandler(listener))
             
             self.handler.setChannel(channel.channel())
-            self.handler.addListener(CommListener().init())
+#             self.handler.addListener()
         except:
             print sys.exc_info()[0]
         finally:
