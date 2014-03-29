@@ -109,7 +109,7 @@ public class JobResource implements Resource {
 		Management.Builder b = Management.newBuilder();
 		JobProposal.Builder jp = JobProposal.newBuilder();
 		
-		jp.setJobId(request.getBody().getJobOp().getJobId());
+		jp.setJobId(request.getBody().getJobOp().getData().getJobId());
 		jp.setOwnerId(NodeIdToInt(nodeId));
 		
 		//setting the weight of the proposal - how heavy is the request
