@@ -123,6 +123,7 @@ public class JobOpManager {
 			if(map_JobOperation.containsKey(jobId))
 			{
 				PerChannelQueue pcq = map_JobOperation.get(jobId).getPCQ();
+				logger.info("Sending Response to Client PCQ");
 				pcq.enqueueResponse(req, null);
 			}
 			else
