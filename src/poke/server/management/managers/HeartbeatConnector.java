@@ -246,7 +246,7 @@ public class HeartbeatConnector extends Thread {
 					}
 				}
 				
-				for(int k = 0;k<=3;k++){
+				for(int k = 0;k<total_nodes;k++){
 					if(k != NodeIdToInt(nodeId) && k != currentNode)
 					{
 						HeartMonitor hb = map_monitors.get(k);
