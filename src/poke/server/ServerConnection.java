@@ -118,12 +118,15 @@ public class ServerConnection {
 			init();
 		}
 		if(channel != null){
-		if (channel.isDone() && channel.isSuccess()) {
+		if (channel.isDone() && channel.isSuccess() &&channel.channel().isOpen() && channel.channel().isActive() && channel.channel().isWritable()) {
 			System.out.println("Channel is success");
 			return channel.channel();
 		} else
-			throw new RuntimeException(
-					"Not able to establish connection to server");
+		{
+			release();
+			init();
+			
+		}
 	
 		}
 		return null;
