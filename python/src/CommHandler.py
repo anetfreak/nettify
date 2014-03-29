@@ -20,5 +20,6 @@ class CommHandler(SimpleChannelInboundHandler):
             if cf.isDone() or cf.isSuccess():
                 print "Done!"
 
-#     def addListener(self, listener):
+    def addListener(self, listener):
+        self.listener = listener
         
