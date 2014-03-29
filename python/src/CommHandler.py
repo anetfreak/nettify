@@ -24,5 +24,6 @@ class CommHandler(SimpleChannelInboundHandler):
         self.listener = listener
         
     def channelRead0(self, ctx, msg):
+        print "Reading message"
         CommListener().onMessage(msg)
         

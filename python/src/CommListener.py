@@ -7,6 +7,7 @@ class CommListener():
     
     def onMessage(self, msg):
         print "Inside onMessage"
+        print "Printing Header of the message"
         printHeader(msg.getHeader())
       
     def printHeader(h):
