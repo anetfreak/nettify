@@ -412,7 +412,7 @@ public class PerChannelQueue implements ChannelQueue {
 							sq.enqueueResponse(reply, null);
 						}
 					}
-				} catch (InterruptedException ie) {
+				} }catch (InterruptedException ie) {
 					break;
 				} catch (Exception e) {
 					PerChannelQueue.logger.error(
