@@ -68,7 +68,6 @@ public class ServerHandler extends SimpleChannelInboundHandler<eye.Comm.Request>
 		
 		queueInstance(ctx.channel()).enqueueRequest(req, ctx.channel());
 		
-		
 
 
 

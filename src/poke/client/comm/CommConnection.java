@@ -40,7 +40,12 @@ import com.google.protobuf.GeneratedMessage;
 
 import eye.Comm.Request;
 
-
+/**
+ * provides an abstraction of the communication to the remote server.
+ * 
+ * @author gash
+ * 
+ */
 public class CommConnection {
 	protected static Logger logger = LoggerFactory.getLogger("connect");
 
@@ -56,7 +61,13 @@ public class CommConnection {
 	// message processing is delegated to a threading model
 	private OutboundWorker worker;
 
-
+	/**
+	 * Create a connection instance to this host/port. On consruction the
+	 * connection is attempted.
+	 * 
+	 * @param host
+	 * @param port
+	 */
 	public CommConnection(String host, int port) {
 		this.host = host;
 		this.port = port;
@@ -64,16 +75,31 @@ public class CommConnection {
 		init();
 	}
 
+	/**
+	 * release all resources
+	 */
 	public void release() {
 		group.shutdownGracefully();
 	}
 
-
+	/**
+	 * send a message - note this is asynchrounous
+	 * 
+	 * @param req
+	 *            The request
+	 * @exception An
+	 *                exception is raised if the message cannot be enqueued.
+	 */
 	public void sendMessage(Request req) throws Exception {
 		// enqueue message
 		outbound.put(req);
 	}
 
+	/**
+	 * abstraction of notification in the communication
+	 * 
+	 * @param listener
+	 */
 	public void addListener(CommListener listener) {
 		// note: the handler should not be null as we create it on construction
 
@@ -130,6 +156,11 @@ public class CommConnection {
 		worker.start();
 	}
 
+	/**
+	 * create connection to remote server
+	 * 
+	 * @return
+	 */
 	protected Channel connect() {
 		// Start the connection attempt.
 		if (channel == null) {
@@ -145,7 +176,13 @@ public class CommConnection {
 			throw new RuntimeException("Not able to establish connection to server");
 	}
 
-
+	/**
+	 * queues outgoing messages - this provides surge protection if the client
+	 * creates large numbers of messages.
+	 * 
+	 * @author gash
+	 * 
+	 */
 	protected class OutboundWorker extends Thread {
 		CommConnection conn;
 		boolean forever = true;
@@ -175,7 +212,23 @@ public class CommConnection {
 					if (ch.isWritable()) {
 						CommHandler handler = conn.connect().pipeline().get(CommHandler.class);
 						handler.setChannel(ch);
+						//if(channel.isDone()&&channel.isSuccess())
+							//System.out.println("channel ok");
+						//ChannelFuture cf = ch.writeAndFlush(msg);
+//						while(!cf.isSuccess())
+						//cf.awaitUninterruptibly();
+						//ch.flush();
+						//System.out.println("In send ** Channel Handler** success");
+						//if (cf.isDone() && !cf.isSuccess()) {
+							//logger.error("failed to poke!" + cf.isCancelled() + cf.isDone() + cf.isSuccess()+cf.cause() );
+							//return false;
+						//}
 						ch.writeAndFlush(msg);
+						//if (!handler.send(msg))
+						//{
+							//conn.outbound.putFirst(msg);
+							//System.out.println("False..!");
+						//}
 					} else
 						conn.outbound.putFirst(msg);
 				} catch (InterruptedException ie) {
@@ -192,6 +245,16 @@ public class CommConnection {
 		}
 	}
 
+	/**
+	 * usage:
+	 * 
+	 * <pre>
+	 * channel.getCloseFuture().addListener(new ClientClosedListener(queue));
+	 * </pre>
+	 * 
+	 * @author gash
+	 * 
+	 */
 	public static class ClientClosedListener implements ChannelFutureListener {
 		CommConnection cc;
 

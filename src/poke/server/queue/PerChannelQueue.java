@@ -26,8 +26,6 @@ import java.util.concurrent.LinkedBlockingDeque;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import poke.server.JobOpManager;
-import poke.server.management.managers.ElectionManager;
 import poke.server.management.managers.JobManager;
 import poke.server.resources.Resource;
 import poke.server.resources.ResourceFactory;
@@ -75,48 +73,40 @@ public class PerChannelQueue implements ChannelQueue {
 	private InboundWorker iworker;
 
 	// not the best method to ensure uniqueness
-	private ThreadGroup tgroup = new ThreadGroup("ServerQueue-"
-			+ System.nanoTime());
+	private ThreadGroup tgroup = new ThreadGroup("ServerQueue-" + System.nanoTime());
 
 	protected PerChannelQueue(Channel channel) {
 		this.channel = channel;
 		init();
 	}
 
-	public Integer NodeIdToInt(String nodeId) {
+	public Integer NodeIdToInt(String nodeId)
+	{
 		Integer i_id = 0;
-		switch (nodeId) {
-		case "zero":
-			i_id = 0;
-			break;
-		case "one":
-			i_id = 1;
-			break;
-		case "two":
-			i_id = 2;
-			break;
-		case "three":
-			i_id = 3;
-			break;
+		switch(nodeId){
+		case "zero" :
+			i_id = 0; break;
+		case "one" :
+			i_id = 1; break;
+		case "two" :
+			i_id = 2; break;
+		case "three" :
+			i_id =3; break;
 		}
 		return i_id;
 	}
-
-	public String IntToNodeId(Integer i_Id) {
+	public String IntToNodeId(Integer i_Id)
+	{
 		String nodeId = "";
-		switch (i_Id) {
-		case 0:
-			nodeId = "zero";
-			break;
-		case 1:
-			nodeId = "one";
-			break;
-		case 2:
-			nodeId = "two";
-			break;
-		case 3:
-			nodeId = "three";
-			break;
+		switch(i_Id){
+		case 0 :
+			nodeId = "zero"; break;
+		case 1 :
+			nodeId = "one"; break;
+		case 2 :
+			nodeId = "two"; break;
+		case 3 :
+			nodeId = "three"; break;
 		}
 		return nodeId;
 	}
@@ -159,16 +149,14 @@ public class PerChannelQueue implements ChannelQueue {
 
 		if (iworker != null) {
 			iworker.forever = false;
-			if (iworker.getState() == State.BLOCKED
-					|| iworker.getState() == State.WAITING)
+			if (iworker.getState() == State.BLOCKED || iworker.getState() == State.WAITING)
 				iworker.interrupt();
 			iworker = null;
 		}
 
 		if (oworker != null) {
 			oworker.forever = false;
-			if (oworker.getState() == State.BLOCKED
-					|| oworker.getState() == State.WAITING)
+			if (oworker.getState() == State.BLOCKED || oworker.getState() == State.WAITING)
 				oworker.interrupt();
 			oworker = null;
 		}
@@ -217,18 +205,15 @@ public class PerChannelQueue implements ChannelQueue {
 			this.sq = sq;
 
 			if (outbound == null)
-				throw new RuntimeException(
-						"connection worker detected null queue");
+				throw new RuntimeException("connection worker detected null queue");
 		}
 
 		@Override
 		public void run() {
 			Channel conn = sq.channel;
-			logger.info("PerChannel OutBoundWorker started...."
-					+ conn.toString() + conn.pipeline().toString());
+			logger.info("PerChannel OutBoundWorker started...." + conn.toString() + conn.pipeline().toString());
 			if (conn == null || !conn.isOpen()) {
-				PerChannelQueue.logger
-						.error("connection missing, no outbound communication");
+				PerChannelQueue.logger.error("connection missing, no outbound communication");
 				return;
 			}
 
@@ -239,23 +224,21 @@ public class PerChannelQueue implements ChannelQueue {
 				try {
 					// block until a message is enqueued
 					GeneratedMessage msg = sq.outbound.take();
-					System.out
-							.println("Got a message at server outbound queue");
+					System.out.println("Got a message at server outbound queue");
 					if (conn.isWritable()) {
 						boolean rtn = false;
-						if (channel != null && channel.isOpen()
-								&& channel.isWritable()) {
+						if (channel != null && channel.isOpen() && channel.isWritable()) {
 							ChannelFuture cf = channel.writeAndFlush(msg);
 							cf.addListener(new WriteListener(sq));
-							// ChannelFuture cf = conn.writeAndFlush(msg);
+							//ChannelFuture cf = conn.writeAndFlush(msg);
 							System.out.println("Server--sending -- response");
 							// blocks on write - use listener to be async
 							cf.awaitUninterruptibly();
 							System.out.println("Written to channel");
 							rtn = cf.isSuccess();
-							if (!rtn) {
-								System.out.println("Sending failed " + rtn
-										+ "{Reason:" + cf.cause() + "}");
+							if (!rtn)
+							{	
+								System.out.println("Sending failed " + rtn + "{Reason:"+cf.cause()+"}");
 								sq.outbound.putFirst(msg);
 							}
 						}
@@ -265,8 +248,7 @@ public class PerChannelQueue implements ChannelQueue {
 				} catch (InterruptedException ie) {
 					break;
 				} catch (Exception e) {
-					PerChannelQueue.logger.error(
-							"Unexpected communcation failure", e);
+					PerChannelQueue.logger.error("Unexpected communcation failure", e);
 					break;
 				}
 			}
@@ -282,8 +264,9 @@ public class PerChannelQueue implements ChannelQueue {
 		PerChannelQueue sq;
 		boolean forever = true;
 
-		// variable to store the jobOperation request
+		//variable to store the jobOperation request
 		Request reqOperation;
+
 
 		public InboundWorker(ThreadGroup tgrp, int workerId, PerChannelQueue sq) {
 			super(tgrp, "inbound-" + workerId);
@@ -291,24 +274,15 @@ public class PerChannelQueue implements ChannelQueue {
 			this.sq = sq;
 
 			if (outbound == null)
-				throw new RuntimeException(
-						"connection worker detected null queue");
+				throw new RuntimeException("connection worker detected null queue");
 		}
-		public boolean isLeader()
-		{
-			return ElectionManager
-					.getInstance()
-					.getLeader()
-					.equals(ElectionManager.getInstance()
-							.getCurrentNode());
-		}
+
 		@Override
 		public void run() {
 			Channel conn = sq.channel;
 			logger.info("PerChannel InbondWorker started");
 			if (conn == null || !conn.isOpen()) {
-				PerChannelQueue.logger
-						.error("connection missing, no inbound communication");
+				PerChannelQueue.logger.error("connection missing, no inbound communication");
 				return;
 			}
 
@@ -327,51 +301,30 @@ public class PerChannelQueue implements ChannelQueue {
 						// do we need to route the request?
 
 						// handle it locally
-						Resource rsc = ResourceFactory.getInstance()
-								.resourceInstance(req.getHeader());
+						Resource rsc = ResourceFactory.getInstance().resourceInstance(req.getHeader());
 
-						// String node_id =
-						// ResourceFactory.getInstance().resourceInstance(req.getHeader().)
+
+						//String node_id = ResourceFactory.getInstance().resourceInstance(req.getHeader().)
 						Request reply = null;
-						if (rsc == null) {
+						if (rsc == null) 
+						{
 							logger.error("failed to obtain resource for " + req);
-							reply = ResourceUtil.buildError(req.getHeader(),
-									PokeStatus.NORESOURCE,
+							reply = ResourceUtil.buildError(req.getHeader(), PokeStatus.NORESOURCE,
 									"Request not processed");
+						} 
+
+						//if the request is for serving a job - pass the request to job manager as jobProposal
+						if(req.getHeader().getRoutingId().getNumber() == Routing.JOBS.getNumber())
+						{
+							//reply = rsc.process(req);
+							reqOperation = req;
+							Management mgmt = rsc.processMgmtRequest(req);
+							addJobToQueue(mgmt);
+							JobBid bidReq = waitForBid();
+							createJobOperation(bidReq);
 						}
-
-						// if the request is for serving a job - pass the
-						// request to job manager as jobProposal
-						if (req.getHeader().getRoutingId().getNumber() == Routing.JOBS
-								.getNumber()) {
-							if (req.getBody().hasJobOp()) {
-								if (isLeader()) {
-									//if leader, then send Job Proposal
-									// reply = rsc.process(req);
-									reqOperation = req;
-									Management mgmt = rsc
-											.processMgmtRequest(req);
-									addJobToQueue(mgmt);
-									JobBid bidReq = waitForBid();
-									createJobOperation(bidReq);
-								}
-								else
-								{
-									//Check if I have to handle the request
-									if(true /* If i have to handle*/)
-									{
-										
-									}
-									else
-									{
-										//Forward the Job for other node to handle
-										JobOpManager.getInstance().sendResponse(req);
-									}
-								}
-							} else if (req.getBody().hasJobStatus()) {
-
-							}
-						} else {
+						else
+						{
 							reply = rsc.process(req);
 							sq.enqueueResponse(reply, null);
 						}
@@ -380,8 +333,7 @@ public class PerChannelQueue implements ChannelQueue {
 				} catch (InterruptedException ie) {
 					break;
 				} catch (Exception e) {
-					PerChannelQueue.logger.error(
-							"Unexpected processing failure", e);
+					PerChannelQueue.logger.error("Unexpected processing failure", e);
 					break;
 				}
 			}
@@ -391,37 +343,37 @@ public class PerChannelQueue implements ChannelQueue {
 			}
 		}
 
-		// method to place a request of job processing on Job Manager
-		public void addJobToQueue(Management jobReq) {
+		//method to place a request of job processing on Job Manager
+		public void addJobToQueue(Management jobReq){
 			logger.info("Job Bid at PCQ added to queue");
 			JobManager.getInstance().submitJobProposal(sq, jobReq);
 		}
 
-		public JobBid waitForBid() {
-			while (bidResponse.isEmpty()) {
-				try {
-					this.sleep(200);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+
+
+		public JobBid waitForBid(){
+			while(bidResponse.isEmpty())
+			{
+					try {
+						this.sleep(200);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 			}
 			logger.info("PCQ recieved a response for Job Proposal");
 			return bidResponse.remove();
 		}
 
-		public Request createJobOperation(JobBid bidReq) {
+		public Request createJobOperation(JobBid bidReq){
 
 			int recNode = (int) (bidReq.getOwnerId());
 			String sendReqtoNode = IntToNodeId(recNode);
-			String myNodeId = ResourceFactory.getInstance().getCfg()
-					.getServer().getProperty("node.id");
+			String myNodeId = ResourceFactory.getInstance().getCfg().getServer().getProperty("node.id");
 			logger.info("Adding the bid to my own queue and forwarding the job proposal to the respective node");
-			logger.info("Bid received for serving the request from the node : "
-					+ sendReqtoNode);
+			logger.info("Bid received for serving the request from the node : "+sendReqtoNode);
 
-			// modifying the joboperation header and payload - sending the
-			// message to the node which has won the bid
+			//modifying the joboperation header and payload - sending the message to the node which has won the bid
 			Request jobOpRequest = reqOperation;
 
 			JobOperation.Builder j = JobOperation.newBuilder();
@@ -429,13 +381,13 @@ public class PerChannelQueue implements ChannelQueue {
 			j.setJobId(jobOpRequest.getBody().getJobOp().getJobId());
 			j.setData(jobOpRequest.getBody().getJobOp().getData());
 
-			// payload containing data for job
+			//payload containing data for job
 			Request.Builder r = Request.newBuilder();
 			eye.Comm.Payload.Builder p = Payload.newBuilder();
 			p.setJobOp(j.build());
 			r.setBody(p.build());
 
-			// header with routing info
+			//header with routing info
 			Header.Builder h = Header.newBuilder();
 			h.setOriginator(myNodeId);
 			h.setTag(jobOpRequest.getHeader().getTag());
@@ -452,14 +404,14 @@ public class PerChannelQueue implements ChannelQueue {
 	}
 
 	/**
-	 * If a response is received after bidding is done, forward the job
-	 * operation request to the server which has sent the bid
-	 * 
+	 * If a response is received after bidding is done, forward the job operation request
+	 * to the server which has sent the bid
 	 * @param bidReq
 	 */
-	public void putBidResponse(JobBid bidReq) {
+	public void putBidResponse(JobBid bidReq){
 		bidResponse.add(bidReq);
 	}
+
 
 	public class WriteListener implements ChannelFutureListener {
 		private ChannelQueue sq;
@@ -471,9 +423,9 @@ public class PerChannelQueue implements ChannelQueue {
 		@Override
 		public void operationComplete(ChannelFuture future) throws Exception {
 			logger.info("Write complete");
-			logger.info("isSuccess: " + future.isSuccess());
+			logger.info("isSuccess: " +future.isSuccess());
 			logger.info("Cause: " + future.cause());
-			// sq.shutdown(true);
+			//sq.shutdown(true);
 		}
 	}
 
