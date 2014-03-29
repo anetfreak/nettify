@@ -255,6 +255,7 @@ public class JobManager {
 				
 				//set own node ID as the owner for this bid
 				String bidOwner = ResourceFactory.getInstance().getCfg().getServer().getProperty("node.id");
+				
 				jb.setOwnerId(NodeIdToInt(bidOwner));
 				jb.setJobId(jpReq.getJobId());
 				jb.setNameSpace(jpReq.getNameSpace());
