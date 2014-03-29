@@ -20,8 +20,6 @@ import poke.server.resources.ResourceFactory;
 import poke.server.resources.ResourceUtil;
 import eye.Comm.JobProposal;
 import eye.Comm.Management;
-import eye.Comm.NameValueSet;
-import eye.Comm.NameValueSet.NodeType;
 import eye.Comm.Payload;
 import eye.Comm.Ping;
 import eye.Comm.PokeStatus;
@@ -104,23 +102,13 @@ public class JobResource implements Resource {
 		Management.Builder b = Management.newBuilder();
 		JobProposal.Builder jp = JobProposal.newBuilder();
 		
-		jp.setJobId(request.getBody().getJobOp().getJobId());
+		jp.setJobId(request.getBody().getJobOp().getData().getJobId());
 		jp.setOwnerId(NodeIdToInt(nodeId));
-		
-		//setting the weight of the proposal - how heavy is the request
-		int min = 1, max = 10;
-		int weight = min + (int)(Math.random() * ((max - min) + 1));
-		jp.setWeight(weight);
-		
-		NameValueSet.Builder nameVal = NameValueSet.newBuilder();
-		nameVal.setNodeType(NodeType.NODE);
-		nameVal.setName(nodeId);
-		jp.setOptions(nameVal);
-		
 		if(request.getBody().getJobOp().getData().hasNameSpace())
 			jp.setNameSpace(request.getBody().getJobOp().getData().getNameSpace());
 		else
-			jp.setNameSpace("JobProposal");
+			jp.setNameSpace("default");
+		jp.setWeight(4);
 		
 		b.setJobPropose(jp);
 		Management reply = b.build();

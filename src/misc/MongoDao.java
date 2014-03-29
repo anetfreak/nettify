@@ -9,12 +9,9 @@ import com.mongodb.DBCursor;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoException;
 
-import eye.Comm.JobDesc;
-
 public class MongoDao {
 
-	
-	public boolean addJob(String namespace, JobDesc job) {
+	public static void main(String[] args) {
 		
 		try {
 			//Connect to Mongo DB..
@@ -26,13 +23,10 @@ public class MongoDao {
 			
 			//Insert..
 			BasicDBObject doc = new BasicDBObject();
-			doc.put("NameSpace", namespace);
-			doc.put("Owner ID", job.getOwnerId());
-			doc.put("Job ID", job.getJobId());
-			doc.put("Job Status Code", job.getStatus().name());
-			doc.put("Node Type", job.getOptions().getNodeType().getNumber());
-			doc.put("Name", job.getOptions().getName());
-			doc.put("Value", job.getOptions().getValue());
+			doc.put("id", 1);
+			doc.put("name", "Distributed Systems");
+			doc.put("university", "San Jose State University");
+			doc.put("credits", 3);
 			collection.insert(doc);
 			
 			//Find and display..
@@ -41,14 +35,14 @@ public class MongoDao {
 			while(cursor.hasNext()) {
 				System.out.println(cursor.next());
 			}
-			return true;
+			
 			
 		} catch(UnknownHostException uhe) {
 			uhe.printStackTrace();
 		} catch(MongoException me) {
 			me.printStackTrace();
 		}
-		return false;
+
 	}
 
 }
