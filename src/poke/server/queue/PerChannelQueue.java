@@ -84,21 +84,23 @@ public class PerChannelQueue implements ChannelQueue {
 		init();
 	}
 
-	public Integer NodeIdToInt(String nodeId) {
+	public Integer NodeIdToInt(String nodeId)
+	{
 		Integer i_id = 0;
-		switch (nodeId) {
-		case "zero":
-			i_id = 0;
-			break;
-		case "one":
-			i_id = 1;
-			break;
-		case "two":
-			i_id = 2;
-			break;
-		case "three":
-			i_id = 3;
-			break;
+		if(nodeId.equals("zero") ){
+				i_id = 0; 
+		}
+		else if(nodeId.equals("one"))
+		{
+				i_id = 1; 
+		}
+		else if(nodeId.equals("two"))
+		{
+				i_id = 2; 
+		}
+		else if (nodeId.equals("three"))
+		{
+				i_id =3; 
 		}
 		return i_id;
 	}
