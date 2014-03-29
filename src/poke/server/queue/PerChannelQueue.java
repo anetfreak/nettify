@@ -400,7 +400,7 @@ public class PerChannelQueue implements ChannelQueue {
 								if (isLeader()) {
 									logger.info("Received a JobStatus request.. I am the leader.. Sending it to the client");
 									// add to outbound queue, write to client
-									sq.enqueueResponse(req, null);
+									JobOpManager.getInstance().submitJobStatus(req);
 								} else {
 									logger.info("Received a JobStatus request.. Forwarding it till it reaches the leader..");
 									// send to next node
