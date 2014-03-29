@@ -380,7 +380,7 @@ public class PerChannelQueue implements ChannelQueue {
 											Request status = createJobStatus(req, b);
 											
 											// send the Job Status request back to the client
-											submitJobStatus(status);
+											JobOpManager.getInstance().submitJobStatus(status);
 										} catch (Exception e) {
 											logger.info("Exception encountered in persisiting to the DB : "
 													+ e);
@@ -403,7 +403,7 @@ public class PerChannelQueue implements ChannelQueue {
 									logger.info("Received a JobStatus request.. Forwarding it till it reaches the leader..");
 									// send to next node
 									JobOpManager.getInstance().submitJobStatus(req);
-								}
+							
 							}
 						} 
 						else {
