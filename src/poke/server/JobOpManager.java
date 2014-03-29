@@ -117,9 +117,10 @@ public class JobOpManager {
 	}
 	
 	public synchronized boolean submitJobStatus(Request req){
+		String jobId = req.getBody().getJobStatus().getJobId();
 		if(isLeader())
 		{
-			String jobId = req.getBody().getJobStatus().getJobId();
+			
 			if(map_JobOperation.containsKey(jobId))
 			{
 				PerChannelQueue pcq = map_JobOperation.get(jobId).getPCQ();
@@ -130,7 +131,12 @@ public class JobOpManager {
 				logger.info("Job not found in Map, discard the response");
 			}
 		}
-		sendResponse(req);
+		else
+		{
+			PerChannelQueue pcq = map_JobOperation.get(jobId).getPCQ();
+			pcq.enqueueResponse(req, null);
+		}
+		//sendResponse(req);
 		return true;
 	}
 	

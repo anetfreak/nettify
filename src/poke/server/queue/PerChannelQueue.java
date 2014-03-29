@@ -229,13 +229,15 @@ public class PerChannelQueue implements ChannelQueue {
 		@Override
 		public void run() {
 			Channel conn = sq.channel;
-			logger.info("PerChannel OutBoundWorker started...."
-					+ conn.toString() + conn.pipeline().toString());
+			
 			if (conn == null || !conn.isOpen()) {
 				PerChannelQueue.logger
 						.error("connection missing, no outbound communication");
 				return;
 			}
+			logger.info("PerChannel OutBoundWorker started...."
+					+ conn.toString() + conn.pipeline().toString());
+			
 
 			while (true) {
 				if (!forever && sq.outbound.size() == 0)
