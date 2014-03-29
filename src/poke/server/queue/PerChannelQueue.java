@@ -40,7 +40,9 @@ import eye.Comm.Header;
 import eye.Comm.Header.Routing;
 import eye.Comm.JobBid;
 import eye.Comm.JobDesc;
+import eye.Comm.JobDesc.JobCode;
 import eye.Comm.JobOperation;
+import eye.Comm.JobStatus;
 import eye.Comm.Management;
 import eye.Comm.Payload;
 import eye.Comm.PokeStatus;
@@ -308,7 +310,8 @@ public class PerChannelQueue implements ChannelQueue {
 			.getServer().getProperty("node.id");
 		}
 		@Override
-		public void run() {
+		public void run() 
+		{
 			Channel conn = sq.channel;
 			logger.info("PerChannel InbondWorker started");
 			if (conn == null || !conn.isOpen()) {
@@ -340,7 +343,9 @@ public class PerChannelQueue implements ChannelQueue {
 						// request to job manager as jobProposal
 						if (req.getHeader().getRoutingId().getNumber() == Routing.JOBS.getNumber()) 
 						{
-							if (req.getBody().hasJobOp()) {
+							//if the request is for JobOperation, process it
+							if (req.getBody().hasJobOp()) 
+							{
 								if (isLeader()) {
 									logger.info("Received a JobOp request .. I am the leader.. Forwarding the request");
 									reqOperation = req;
@@ -369,20 +374,26 @@ public class PerChannelQueue implements ChannelQueue {
 												logger.info("Job desc added to the DB..");
 											else
 												logger.info("Job desc not added to the DB");
+											
+											// create job status request
+											Request status = createJobStatus(req, b);
+											
+											// send the Job Status request back to the client
+											submitJobStatus(status);
 										} catch (Exception e) {
 											logger.info("Exception encountered in persisiting to the DB : "
 													+ e);
 										}
-										// create job status request
-										// send to network,
-										// TODO submitJobStatus(Request jobstatusreq)
+
 									} else {
 										logger.info("I do not have to serve this JobOp request. Forwarding it..");
 										// Forward the Job for other node tohandle
 										JobOpManager.getInstance().sendResponse(req);
 									}
 								}
-							} else if (req.getBody().hasJobStatus()) {
+							} 
+							//if the request has a JobStatus, the request has been processed, it needs to be sent back to the client
+							else if (req.getBody().hasJobStatus()) {
 								if (isLeader()) {
 									logger.info("Received a JobStatus request.. I am the leader.. Sending it to the client");
 									// add to outbound queue, write to client
@@ -415,12 +426,14 @@ public class PerChannelQueue implements ChannelQueue {
 		}
 
 		// method to place a request of job processing on Job Manager
-		public void addJobToQueue(Management jobReq) {
+		public void addJobToQueue(Management jobReq) 
+		{
 			logger.info("Job Bid at PCQ added to queue");
 			JobManager.getInstance().submitJobProposal(sq, jobReq);
 		}
 
-		public JobBid waitForBid() {
+		public JobBid waitForBid() 
+		{
 			while (bidResponse.isEmpty()) {
 				try {
 					this.sleep(200);
@@ -433,6 +446,51 @@ public class PerChannelQueue implements ChannelQueue {
 			return bidResponse.remove();
 		}
 
+		/**
+		 * If the request has been processed by the cluster/any client : forward the Job Status request
+		 * @param jobstatusreq
+		 * @return
+		 */
+		public void submitJobStatus(Request jobstatusreq)
+		{
+			sq.enqueueResponse(jobstatusreq, null);
+		}
+		
+		
+		/**
+		 * If the Job has been processed by the cluster : create a Job Status request
+		 * @param jobOp
+		 * @return
+		 */
+		public Request createJobStatus(Request jobOp, boolean b)
+		{
+			JobStatus.Builder js = JobStatus.newBuilder();
+			js.setJobId(jobOp.getBody().getJobOp().getJobId());
+			if(b)
+				js.setStatus(PokeStatus.SUCCESS);
+			else
+				js.setStatus(PokeStatus.FAILURE);
+			js.setJobState(JobCode.JOBRECEIVED);
+
+			// payload containing data for job
+			Request.Builder r = Request.newBuilder();
+			eye.Comm.Payload.Builder p = Payload.newBuilder();
+			p.setJobStatus(js.build());
+			r.setBody(p.build());
+
+			// header with routing info
+			Header.Builder h = Header.newBuilder();
+			h.setOriginator(getMyNode());
+			h.setTag(jobOp.getHeader().getTag());
+			h.setTime(jobOp.getHeader().getTime());
+			h.setRoutingId(jobOp.getHeader().getRoutingId());
+			h.setToNode("client");
+
+			r.setHeader(h.build());
+			Request req = r.build();
+		
+			return req;
+		}
 		public Request createJobOperation(JobBid bidReq) {
 
 			int recNode = (int) (bidReq.getOwnerId());
