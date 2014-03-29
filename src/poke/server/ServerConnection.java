@@ -32,7 +32,8 @@ import com.google.protobuf.GeneratedMessage;
 import eye.Comm.Request;
 
 public class ServerConnection {
-	protected static Logger logger = LoggerFactory.getLogger("ServerConnection");
+	protected static Logger logger = LoggerFactory
+			.getLogger("ServerConnection");
 	private String host;
 	private int port;
 	public ChannelFuture channel; // do not use directly call connect()!
@@ -54,8 +55,7 @@ public class ServerConnection {
 		worker.start();
 
 	}
-	
-	
+
 	public void release() {
 		group.shutdownGracefully();
 	}
@@ -68,44 +68,47 @@ public class ServerConnection {
 
 	private void init() {
 		// the queue to support client-side surging
-		group = new NioEventLoopGroup();
-		try {
-			handler = new ServerConnHandler();
-			Bootstrap b = new Bootstrap();
-			b.group(group).channel(NioSocketChannel.class).handler(handler);
-			b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000);
-			b.option(ChannelOption.TCP_NODELAY, true);
-			b.option(ChannelOption.SO_KEEPALIVE, true);
+		if (host != null) {
+			group = new NioEventLoopGroup();
+			try {
+				handler = new ServerConnHandler();
+				Bootstrap b = new Bootstrap();
+				b.group(group).channel(NioSocketChannel.class).handler(handler);
+				b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000);
+				b.option(ChannelOption.TCP_NODELAY, true);
+				b.option(ChannelOption.SO_KEEPALIVE, true);
 
-			// Make the connection attempt.
-			channel = b.connect(host, port).syncUninterruptibly();
-			channel.awaitUninterruptibly(5000l);
-			if (channel == null)
-				logger.info("Channel is null, not able to connect to Host: "+ host + "  Port: " + port);
-			else
-				System.out.println("Channel created, not null");
+				// Make the connection attempt.
+				channel = b.connect(host, port).syncUninterruptibly();
+				channel.awaitUninterruptibly(5000l);
+				if (channel == null)
+					logger.info("Channel is null, not able to connect to Host: "
+							+ host + "  Port: " + port);
+				else
+					System.out.println("Channel created, not null");
 
-			// setting pipeline parameters
-			ChannelPipeline pipeline = channel.channel().pipeline();
-			pipeline.addLast("frameDecoder", new LengthFieldBasedFrameDecoder(
-					67108864, 0, 4, 0, 4));
-			pipeline.addLast("protobufDecoder", new ProtobufDecoder(
-					eye.Comm.Request.getDefaultInstance()));
-			pipeline.addLast("frameEncoder", new LengthFieldPrepender(4));
-			pipeline.addLast("protobufEncoder", new ProtobufEncoder());
-			pipeline.addLast("handler", handler);
+				// setting pipeline parameters
+				ChannelPipeline pipeline = channel.channel().pipeline();
+				pipeline.addLast("frameDecoder",
+						new LengthFieldBasedFrameDecoder(67108864, 0, 4, 0, 4));
+				pipeline.addLast("protobufDecoder", new ProtobufDecoder(
+						eye.Comm.Request.getDefaultInstance()));
+				pipeline.addLast("frameEncoder", new LengthFieldPrepender(4));
+				pipeline.addLast("protobufEncoder", new ProtobufEncoder());
+				pipeline.addLast("handler", handler);
 
-			// want to monitor the connection to the server s.t. if we loose the
-			// connection, we can try to re-establish it.
-			ClientClosedListener ccl = new ClientClosedListener(this);
-			//handler.setChannel(channel.channel());
-			channel.channel().closeFuture().addListener(ccl);
+				// want to monitor the connection to the server s.t. if we loose
+				// the
+				// connection, we can try to re-establish it.
+				ClientClosedListener ccl = new ClientClosedListener(this);
+				// handler.setChannel(channel.channel());
+				channel.channel().closeFuture().addListener(ccl);
 
-		} catch (Exception ex) {
-			logger.error("failed to initialize the client connection", ex);
+			} catch (Exception ex) {
+				logger.error("failed to initialize the client connection", ex);
 
+			}
 		}
-
 	}
 
 	protected Channel connect() {
@@ -113,33 +116,41 @@ public class ServerConnection {
 		if (channel == null) {
 			init();
 		}
-
+		if(channel != null){
 		if (channel.isDone() && channel.isSuccess()) {
 			System.out.println("Channel is success");
 			return channel.channel();
 		} else
 			throw new RuntimeException(
 					"Not able to establish connection to server");
+	
+		}
+		return null;
 	}
 
-	protected void checkandChangeConn()
-	{
+	protected void checkandChangeConn() {
 		String currNode = ElectionManager.getInstance().getCurrentNode();
-		ServerConf conf = ResourceFactory.getInstance().getCfg();
-		NodeDesc node = conf.getNearest().getNearestNodes().get(currNode);
-		String nextHost = node.getHost();
-		int nextPort = node.getPort();
-		if(!nextHost.equals(host) || nextPort != port )
-		{
-			logger.info("Next Node Changed from host: " + host + ":"+port + " to host: " + nextHost + ":" + nextPort);
-			//Reset Connection
-			this.host = nextHost;
-			this.port = nextPort;
-			release();
-			init();
+		logger.info("curr Node: " + currNode);
+		if (!currNode.equals("")) {
+			ServerConf conf = ResourceFactory.getInstance().getCfg();
+			logger.info("ServerConf: " + conf);
+			NodeDesc node = conf.getNearest().getNearestNodes().get(currNode);
+			logger.info("NodeDesc:" + node);
+			String nextHost = node.getHost();
+			logger.info("nextHost: " + nextHost);
+			int nextPort = node.getPort();
+			if (!nextHost.equals(host) || nextPort != port) {
+				logger.info("Next Node Changed from host: " + host + ":" + port
+						+ " to host: " + nextHost + ":" + nextPort);
+				// Reset Connection
+				this.host = nextHost;
+				this.port = nextPort;
+				release();
+				init();
+			}
 		}
 	}
-	
+
 	protected class OutboundWorker extends Thread {
 		ServerConnection conn;
 		boolean forever = true;
@@ -156,15 +167,17 @@ public class ServerConnection {
 		public void run() {
 			logger.info("ServerConnection: outbound worker started");
 			Channel ch = null;
-			
+
 			while (true) {
 				if (!forever)
 					break;
-				//Check if connection to next node changed, if yes then connect to new neighbour
+				// Check if connection to next node changed, if yes then connect
+				// to new neighbour
 				conn.checkandChangeConn();
 				ch = conn.connect();
 				if (ch == null || !ch.isOpen()) {
-					ServerConnection.logger.error("connection missing, no outbound communication");
+					ServerConnection.logger
+							.error("connection missing, no outbound communication");
 					try {
 						Thread.sleep(500);
 					} catch (InterruptedException e) {
@@ -172,7 +185,7 @@ public class ServerConnection {
 					}
 					continue;
 				}
-				
+
 				try {
 					// block until a message is enqueued
 					GeneratedMessage msg = conn.outbound.take();
