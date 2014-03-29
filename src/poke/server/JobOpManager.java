@@ -117,14 +117,13 @@ public class JobOpManager {
 	}
 	
 	public synchronized boolean submitJobStatus(Request req){
-		String jobId = req.getBody().getJobStatus().getJobId();
 		if(isLeader())
 		{
-			
+			String jobId = req.getBody().getJobStatus().getJobId();
 			if(map_JobOperation.containsKey(jobId))
 			{
 				PerChannelQueue pcq = map_JobOperation.get(jobId).getPCQ();
-				//TODO write to pcq
+				pcq.enqueueResponse(req, null);
 			}
 			else
 			{
@@ -133,10 +132,8 @@ public class JobOpManager {
 		}
 		else
 		{
-			PerChannelQueue pcq = map_JobOperation.get(jobId).getPCQ();
-			pcq.enqueueResponse(req, null);
+			sendResponse(req);
 		}
-		//sendResponse(req);
 		return true;
 	}
 	
