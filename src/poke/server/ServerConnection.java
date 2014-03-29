@@ -57,7 +57,8 @@ public class ServerConnection {
 	}
 
 	public void release() {
-		group.shutdownGracefully();
+		if(group != null)
+			group.shutdownGracefully();
 	}
 
 	public void sendMessage(Request req) throws Exception {
