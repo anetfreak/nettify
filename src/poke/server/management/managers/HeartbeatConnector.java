@@ -27,6 +27,7 @@ import eye.Comm.LeaderElection.VoteAction;
 
 import poke.monitor.HeartMonitor;
 import poke.server.management.managers.HeartbeatData.BeatStatus;
+import poke.server.resources.ResourceFactory;
 
 /**
  * The connector collects connection monitors (e.g., listeners implement the
@@ -156,10 +157,10 @@ public class HeartbeatConnector extends Thread {
 			return;
 		} else
 			logger.info("HB connection monitor starting, node has " + monitors.size() + " connections");
-		
+		Integer total_nodes = Integer.parseInt(ResourceFactory.getCfg().getServer().getProperty("total_nodes"));
 		//Amit trying to implement automatic handling on ring
 		Map<Integer,HeartMonitor> map_monitors = new HashMap<Integer,HeartMonitor>();
-		Integer currentNode = (NodeIdToInt(this.nodeId)+1)%4;
+		Integer currentNode = (NodeIdToInt(this.nodeId)+1)%total_nodes;
 		for (HeartMonitor hb : monitors) {
 			System.out.println("Adding monitor to map id: "+NodeIdToInt(hb.getNodeId()));
 			map_monitors.put(NodeIdToInt(hb.getNodeId()), hb);
@@ -172,18 +173,18 @@ public class HeartbeatConnector extends Thread {
 				// try to establish connections to our nearest nodes
 				//Amit trying to implement automatic handling on ring
 				//for (HeartMonitor hb : monitors) {
-				for(int i = 0;i<=3;i++){
-					Integer nextNode = (NodeIdToInt(this.nodeId) + 1 + i)%4; //next node to which this node should connect in Ring
+				for(int i = 0;i<total_nodes;i++){
+					Integer nextNode = (NodeIdToInt(this.nodeId) + 1 + i)%total_nodes; //next node to which this node should connect in Ring
 					if(nextNode == NodeIdToInt(this.nodeId)) //if next node is this node then continue
 						continue;
 					HeartMonitor hb = map_monitors.get(nextNode);
 					if (!hb.isConnected()) {
 						try {
-							for(int j =0;j<5;j++)
+							for(int j =0;j<2;j++)
 							{
 								logger.info("attempting to connect to node: " + hb.getNodeInfo());
 								hb.startHeartbeat();
-								Thread.sleep(sConnectRate);
+								Thread.sleep(500);
 								if(hb.isConnected())
 								{
 									logger.info("Connected to node :"+hb.getNodeInfo());
