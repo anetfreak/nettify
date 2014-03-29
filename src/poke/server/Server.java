@@ -64,7 +64,7 @@ public class Server {
 	protected static ChannelGroup allChannels;
 	protected static HashMap<Integer, ServerBootstrap> bootstrap = new HashMap<Integer, ServerBootstrap>();
 	protected ServerConf conf;
-
+	protected JobOpManager jobOpmgr;
 	protected JobManager jobMgr;
 	protected NetworkManager networkMgr;
 	protected HeartbeatManager heartbeatMgr;
@@ -285,7 +285,7 @@ public class Server {
 		
 		// create manager for accepting jobs
 		jobMgr = JobManager.getInstance(myId);
-
+		jobOpmgr = JobOpManager.getInstance(myId);
 		// establish nearest nodes and start receiving heartbeats
 		heartbeatMgr = HeartbeatManager.getInstance(myId);
 		HeartbeatConnector.getInstance().setNodeId(myId);
