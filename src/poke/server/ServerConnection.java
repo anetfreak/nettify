@@ -49,6 +49,10 @@ public class ServerConnection {
 		outbound = new LinkedBlockingDeque<com.google.protobuf.GeneratedMessage>();
 		host = null;
 		port = 0;
+		// start outbound message processor
+		worker = new OutboundWorker(this);
+		worker.start();
+
 	}
 	
 	
@@ -102,9 +106,6 @@ public class ServerConnection {
 
 		}
 
-		// start outbound message processor
-		worker = new OutboundWorker(this);
-		worker.start();
 	}
 
 	protected Channel connect() {
@@ -153,10 +154,11 @@ public class ServerConnection {
 
 		@Override
 		public void run() {
+			logger.info("ServerConnection: outbound worker started");
 			Channel ch = null;
 			
 			while (true) {
-				if (!forever && conn.outbound.size() == 0)
+				if (!forever)
 					break;
 				//Check if connection to next node changed, if yes then connect to new neighbour
 				conn.checkandChangeConn();
@@ -174,7 +176,7 @@ public class ServerConnection {
 				try {
 					// block until a message is enqueued
 					GeneratedMessage msg = conn.outbound.take();
-					// System.out.println("Message received");
+					logger.info("Outbound message recieved, writing to channel");
 					if (ch.isWritable()) {
 						ch.writeAndFlush(msg);
 					} else
