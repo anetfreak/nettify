@@ -54,7 +54,7 @@ public class ElectionManager {
 	private ChannelFuture cf;
 	private String nodeId;
 	public static String LeaderId = ""; // Current Leader
-	public static String currentNode; // Currently connected node
+	public static String currentNode = ""; // Currently connected node
 
 	public static String getLeader() {
 		return LeaderId;
