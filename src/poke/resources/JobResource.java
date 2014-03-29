@@ -113,7 +113,7 @@ public class JobResource implements Resource {
 		jp.setWeight(weight);
 		
 		NameValueSet.Builder nameVal = NameValueSet.newBuilder();
-		nameVal.setNodeType(NodeType.valueOf(nodeId));
+		nameVal.setNodeType(NodeType.valueOf(nodeId).NODE);
 		nameVal.setName(nodeId);
 		jp.setOptions(nameVal);
 		
