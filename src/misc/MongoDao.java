@@ -29,7 +29,7 @@ public class MongoDao {
 			doc.put("NameSpace", namespace);
 			doc.put("Owner ID", job.getOwnerId());
 			doc.put("Job ID", job.getJobId());
-			doc.put("Job Status Code", job.getStatus().JOBRECEIVED);
+			doc.put("Job Status Code", job.getStatus());
 			doc.put("Node Type", job.getOptions().getNodeType().getNumber());
 			doc.put("Name", job.getOptions().getName());
 			doc.put("Value", job.getOptions().getValue());
