@@ -42,10 +42,9 @@ class CommConnection():
             pipeline.addLast("frameEncoder", LengthFieldPrepender(4))
             pipeline.addLast("protobufEncoder", ProtobufEncoder())    
             pipeline.addLast("handler", CommHandler())
-#             pipeline.addLast()
             
             self.handler.setChannel(channel.channel())
-#             self.handler.addListener(CommListener())
+            self.handler.addListener(CommListener().init())
         except:
             print sys.exc_info()[0]
         finally:
