@@ -268,6 +268,7 @@ public class PerChannelQueue implements ChannelQueue {
 					} else
 						sq.outbound.putFirst(msg);
 				} catch (InterruptedException ie) {
+					ie.printStackTrace();
 					break;
 				} catch (Exception e) {
 					PerChannelQueue.logger.error(

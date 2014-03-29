@@ -7,8 +7,8 @@ from CommListener import CommListener
 
 class CommHandler(SimpleChannelInboundHandler):
     
-    def __init__(self, listener):
-        self.listener = listener
+    def __init__(self, conn):
+        self.conn = conn
         
     def setChannel(self, channel):
         self.channel = channel
@@ -23,11 +23,7 @@ class CommHandler(SimpleChannelInboundHandler):
             if cf.isDone() or cf.isSuccess():
                 print "Done!"
 
-#     def addListener(self, listener):
-#         self.listener = listener
-#         return self
-        
     def channelRead0(self, ctx, msg):
         print "Reading message"
-        self.listener.onMessage(msg)
+        self.conn.onMessage(msg)
         

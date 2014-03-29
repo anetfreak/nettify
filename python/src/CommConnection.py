@@ -24,15 +24,15 @@ class CommConnection():
         group = NioEventLoopGroup()
         try:
             #Create the eventLoopGroup and the channel
-            listener = CommListener()
-            self.handler = CommHandler(listener)
+#             listener = CommListener()
+            self.handler = CommHandler(self)
             bootstrap = Bootstrap().group(group).channel(NioSocketChannel).handler(self.handler)
             bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS,10000)
             bootstrap.option(ChannelOption.TCP_NODELAY, True)
             bootstrap.option(ChannelOption.SO_KEEPALIVE, True) 
             #bootstrap.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
             channel = bootstrap.connect(host, port).syncUninterruptibly()
-            channel.awaitUninterruptibly(2000)
+            channel.awaitUninterruptibly(5000)
             if channel is None:
                 print "Could not connect to the Server"
             else:
@@ -43,7 +43,7 @@ class CommConnection():
             pipeline.addLast("protobufDecoder", ProtobufDecoder(Request.getDefaultInstance()))
             pipeline.addLast("frameEncoder", LengthFieldPrepender(4))
             pipeline.addLast("protobufEncoder", ProtobufEncoder())    
-            pipeline.addLast("handler", CommHandler(listener))
+            pipeline.addLast("handler", CommHandler(self))
             
             self.handler.setChannel(channel.channel())
 #             self.handler.addListener()
@@ -105,5 +105,22 @@ class CommConnection():
         r.setHeader(h.build())
 
         req = r.build()
-        self.handler.send(req)    
+        self.handler.send(req)
+        
+    def onMessage(self, msg):
+        print "Inside onMessage"
+        print "Printing Header of the message"
+        printHeader(msg.getHeader())
+      
+    def printHeader(h):
+        print "Header"
+        print " - Orig   : " + h.getOriginator()
+        print " - Req ID : " + h.getRoutingId()
+        print " - Tag    : " + h.getTag()
+        print " - Time   : " + h.getTime()
+        print " - Status : " + h.getReplyCode()
+        if h.getReplyCode().getNumber() != eye.Comm.PokeStatus.SUCCESS_VALUE:
+            print " - Re Msg : " + h.getReplyMsg()
+
+        print ""    
                     
