@@ -46,7 +46,6 @@ class CommConnection():
             pipeline.addLast("handler", CommHandler(self))
             
             self.handler.setChannel(channel.channel())
-#             self.handler.addListener()
         except:
             print sys.exc_info()[0]
         finally:
@@ -110,17 +109,13 @@ class CommConnection():
     def onMessage(self, msg):
         print "Inside onMessage"
         print "Printing Header of the message"
-        printHeader(msg.getHeader())
+        print msg.hasHeader()
       
-    def printHeader(h):
+    def myPrintHeader(h):
         print "Header"
         print " - Orig   : " + h.getOriginator()
         print " - Req ID : " + h.getRoutingId()
         print " - Tag    : " + h.getTag()
         print " - Time   : " + h.getTime()
-        print " - Status : " + h.getReplyCode()
-        if h.getReplyCode().getNumber() != eye.Comm.PokeStatus.SUCCESS_VALUE:
-            print " - Re Msg : " + h.getReplyMsg()
-
         print ""    
                     
