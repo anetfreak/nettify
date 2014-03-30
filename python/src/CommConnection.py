@@ -109,7 +109,7 @@ class CommConnection():
     def onMessage(self, msg):
         print "Inside onMessage"
         print "Printing Header of the message"
-        print msg.hasHeader()
+        print msg.isDirect()
       
     def myPrintHeader(h):
         print "Header"
