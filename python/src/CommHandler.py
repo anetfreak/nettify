@@ -3,7 +3,6 @@ sys.path.append("netty-all-4.0.15.Final.jar")
 sys.path.append("protobuf-java-2.5.0.jar")
 from io.netty.channel import Channel, ChannelFuture, ChannelPipeline, SimpleChannelInboundHandler, ChannelHandlerContext
 from eye.Comm import Request
-from CommListener import CommListener
 
 class CommHandler(SimpleChannelInboundHandler):
     

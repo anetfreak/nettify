@@ -13,7 +13,7 @@ from io.netty.channel import Channel, ChannelPipeline, SimpleChannelInboundHandl
 from io.netty.handler.codec import LengthFieldBasedFrameDecoder, LengthFieldPrepender
 from io.netty.handler.codec.protobuf import ProtobufDecoder, ProtobufEncoder
 from CommHandler import CommHandler
-from CommListener import CommListener
+# from CommListener import CommListener
 
 class CommConnection():
     
