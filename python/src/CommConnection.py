@@ -80,7 +80,6 @@ class CommConnection():
         #Payload
         r = Request.newBuilder()
         p = Payload.newBuilder()
-        jobOp.setData(jobDesc.build())
         p.setJobOp(jobOp.build())
         r.setBody(p.build())
 
