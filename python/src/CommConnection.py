@@ -93,7 +93,7 @@ class CommConnection():
         #header with routing info
         h = Header.newBuilder()
         h.setOriginator("Node Zero")
-        h.setTag("test finger")
+        h.setTag("Request to add a new job")
         h.setRoutingId(Header.Routing.JOBS)
         r.setHeader(h.build())
 
@@ -115,6 +115,27 @@ class CommConnection():
         h = Header.newBuilder()
         h.setOriginator("Node Zero")
         h.setTag("Request to List all jobs")
+        h.setRoutingId(Header.Routing.JOBS)
+        r.setHeader(h.build())
+
+        req = r.build()
+        self.handler.send(req)
+        
+    def removeJobReq(self):
+        jobOp = JobOperation.newBuilder()
+        jobOp.setAction(JobOperation.JobAction.REMOVEJOB)
+        jobOp.setJobId("zero")
+        
+        #Payload
+        r = Request.newBuilder()
+        p = Payload.newBuilder()
+        p.setJobOp(jobOp.build())
+        r.setBody(p.build())
+
+        #header with routing info
+        h = Header.newBuilder()
+        h.setOriginator("Node Zero")
+        h.setTag("Request to remove job")
         h.setRoutingId(Header.Routing.JOBS)
         r.setHeader(h.build())
 
