@@ -53,7 +53,7 @@ class CommConnection():
     
     def poke(self):
         ping = Ping.newBuilder()
-        ping.setTag("test poke")
+        ping.setTag("Poke sample")
         ping.setNumber(5)
         
         #Payload
@@ -64,21 +64,40 @@ class CommConnection():
 
         #header with routing info
         h = Header.newBuilder()
-        h.setOriginator("client")
-        h.setTag("test finger")
+        h.setOriginator("Node Zero")
+        h.setTag("Poke")
         h.setRoutingId(Header.Routing.PING)
         r.setHeader(h.build())
 
         req = r.build()
         self.handler.send(req)
         
-    def jobrequest(self):
-        ping = Ping.newBuilder()
-        ping.setTag("test job")
-        ping.setNumber(5)
+    def addJobReq(self):
+        jobOp = JobOperation.newBuilder()
+        jobOp.setAction(JobOperation.JobAction.ADDJOB)
+        jobOp.setJobId("zero")
         
+        #Payload
+        r = Request.newBuilder()
+        p = Payload.newBuilder()
+        jobOp.setData(jobDesc.build())
+        p.setJobOp(jobOp.build())
+        r.setBody(p.build())
+
+        #header with routing info
+        h = Header.newBuilder()
+        h.setOriginator("Node Zero")
+        h.setTag("test finger")
+        h.setRoutingId(Header.Routing.JOBS)
+        r.setHeader(h.build())
+
+        req = r.build()
+        self.handler.send(req)
+        
+    def listJobsReq(self):
         jobOp = JobOperation.newBuilder()
         jobOp.setAction(JobOperation.JobAction.LISTJOBS)
+        jobOp.setJobId("zero")
         
         jobDesc = JobDesc.newBuilder()
         jobDesc.setNameSpace("engineering")
@@ -86,19 +105,17 @@ class CommConnection():
         jobDesc.setJobId("zero")
         jobDesc.setStatus(JobDesc.JobCode.JOBUNKNOWN)
         
-        
         #Payload
         r = Request.newBuilder()
         p = Payload.newBuilder()
-        p.setPing(ping.build())
         jobOp.setData(jobDesc.build())
         p.setJobOp(jobOp.build())
         r.setBody(p.build())
 
         #header with routing info
         h = Header.newBuilder()
-        h.setOriginator("client")
-        h.setTag("test finger")
+        h.setOriginator("Node Zero")
+        h.setTag("Request to List all jobs")
         h.setRoutingId(Header.Routing.JOBS)
         r.setHeader(h.build())
 
