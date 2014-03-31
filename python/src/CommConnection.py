@@ -13,7 +13,7 @@ from io.netty.channel import Channel, ChannelPipeline, SimpleChannelInboundHandl
 from io.netty.handler.codec import LengthFieldBasedFrameDecoder, LengthFieldPrepender
 from io.netty.handler.codec.protobuf import ProtobufDecoder, ProtobufEncoder
 from CommHandler import CommHandler
-# from CommListener import CommListener
+import jarray
 
 class CommConnection():
     
@@ -109,9 +109,13 @@ class CommConnection():
     def onMessage(self, msg):
         print "Inside onMessage"
         print "Printing Header of the message"
-        print msg.isDirect()
+        length = msg.writerIndex()
+        data = [None]
+        data[0] = buf = jarray.zeros(length, "b")
+        msg.getBytes(0, buf)
+        print data[0].tostring()
       
-    def myPrintHeader(h):
+    def printHeader(h):
         print "Header"
         print " - Orig   : " + h.getOriginator()
         print " - Req ID : " + h.getRoutingId()
