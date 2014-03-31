@@ -24,7 +24,6 @@ class CommConnection():
         group = NioEventLoopGroup()
         try:
             #Create the eventLoopGroup and the channel
-#             listener = CommListener()
             self.handler = CommHandler(self)
             bootstrap = Bootstrap().group(group).channel(NioSocketChannel).handler(self.handler)
             bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS,10000)
