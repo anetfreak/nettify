@@ -77,9 +77,16 @@ class CommConnection():
         jobOp.setAction(JobOperation.JobAction.ADDJOB)
         jobOp.setJobId("zero")
         
+        jobDesc = JobDesc.newBuilder()
+        jobDesc.setNameSpace("engineering")
+        jobDesc.setOwnerId(0)
+        jobDesc.setJobId("zero")
+        jobDesc.setStatus(JobDesc.JobCode.JOBUNKNOWN)
+        
         #Payload
         r = Request.newBuilder()
         p = Payload.newBuilder()
+        jobOp.setData(jobDesc.build())
         p.setJobOp(jobOp.build())
         r.setBody(p.build())
 
@@ -98,16 +105,9 @@ class CommConnection():
         jobOp.setAction(JobOperation.JobAction.LISTJOBS)
         jobOp.setJobId("zero")
         
-        jobDesc = JobDesc.newBuilder()
-        jobDesc.setNameSpace("engineering")
-        jobDesc.setOwnerId(0)
-        jobDesc.setJobId("zero")
-        jobDesc.setStatus(JobDesc.JobCode.JOBUNKNOWN)
-        
         #Payload
         r = Request.newBuilder()
         p = Payload.newBuilder()
-        jobOp.setData(jobDesc.build())
         p.setJobOp(jobOp.build())
         r.setBody(p.build())
 
