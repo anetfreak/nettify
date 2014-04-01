@@ -15,13 +15,13 @@
  */
 package poke.demo;
 
+import poke.client.ClientCommand;
+import poke.client.ClientPrintListener;
+import poke.client.comm.CommListener;
 import eye.Comm.JobDesc;
 import eye.Comm.JobDesc.JobCode;
 import eye.Comm.JobOperation.JobAction;
 import eye.Comm.NameValueSet;
-import poke.client.ClientCommand;
-import poke.client.ClientPrintListener;
-import poke.client.comm.CommListener;
 
 /**
  * DEMO: how to use the command class to implement a ping
