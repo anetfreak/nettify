@@ -20,6 +20,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 
 import java.lang.Thread.State;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -365,6 +366,7 @@ public class PerChannelQueue implements ChannelQueue {
 									// Check if I have to handle the request
 									if (req.getHeader().getToNode().equals(getMyNode())) 
 									{
+										logger.info("My bidding was highest.. This JobOp request is for me.. Processing it..");
 										//if I get a job operation with ADD JOB code, then add to DB
 										if(req.getBody().getJobOp().getAction().getNumber() == 1)
 										{
@@ -372,20 +374,15 @@ public class PerChannelQueue implements ChannelQueue {
 											{
 												// access the database, do the operation
 												// sending the job desc object to the DB
-												logger.info("My bidding was highest.. This JobOp request is for me.. Processing it..");
 												Boolean b = storage
-														.addJob(req.getBody()
-																.getJobOp().getData()
-																.getNameSpace(), req
-																.getBody().getJobOp()
-																.getData());
+														.addJob(req.getBody().getJobOp().getData().getNameSpace(), req.getBody().getJobOp().getData());
 												if (b)
 													logger.info("Job desc added to the DB..");
 												else
 													logger.info("Job desc not added to the DB");
 
 												// create job status request
-												Request status = createJobStatus(req, b);
+												Request status = createJobStatus(req, b, null);
 
 												// send the Job Status request back to the client
 												JobOpManager.getInstance().submitJobStatus(status);
@@ -399,7 +396,6 @@ public class PerChannelQueue implements ChannelQueue {
 										{
 											try 
 											{
-												logger.info("My bidding was highest.. This JobOp request is for me.. Processing it..");
 												Boolean b = storage.removeJob(req.getBody().getJobOp().getData().getNameSpace(), req.getBody().getJobOp().getJobId());
 												if (b)
 													logger.info("Job desc removed from the DB..");
@@ -407,7 +403,7 @@ public class PerChannelQueue implements ChannelQueue {
 													logger.info("Could not remove job desc from the DB");
 
 												// create job status request
-												Request status = createJobStatus(req, b);
+												Request status = createJobStatus(req, b, null);
 
 												// send the Job Status request back to the client
 												JobOpManager.getInstance().submitJobStatus(status);
@@ -416,7 +412,32 @@ public class PerChannelQueue implements ChannelQueue {
 														+ e);
 											}
 										}
+										//if the job operation request if for finding the jobs 
+										else if (req.getBody().getJobOp().getAction().getNumber() == 4)
+										{
+											try
+											{
+												Boolean b = false;
+												List<JobDesc> listJobs = storage.findJobs(req.getBody().getJobOp().getData().getNameSpace(), req.getBody().getJobOp().getData());
+												if (!listJobs.isEmpty())
+												{
+													 b = true;
+													logger.info("Fetched job lists from the DB for JObID : "+req.getBody().getJobOp().getJobId());
+												}
+												else
+													logger.info("No Jobs found with the JobID : "+req.getBody().getJobOp().getJobId());
 
+												// create job status request
+												Request status = createJobStatus(req, b, listJobs);
+												
+												// send the Job Status request back to the client
+												JobOpManager.getInstance().submitJobStatus(status);
+											}
+											catch(Exception e)
+											{
+												logger.info("Exception encountered in persisiting to the DB : "+ e);
+											}
+										}
 									}
 									else {
 										logger.info("I do not have to serve this JobOp request. Forwarding it..");
@@ -496,7 +517,7 @@ public class PerChannelQueue implements ChannelQueue {
 		 * @param jobOp
 		 * @return
 		 */
-		public Request createJobStatus(Request jobOp, boolean b)
+		public Request createJobStatus(Request jobOp, boolean b, List<JobDesc> jobDescList)
 		{
 			JobStatus.Builder js = JobStatus.newBuilder();
 			js.setJobId(jobOp.getBody().getJobOp().getJobId());
@@ -506,6 +527,13 @@ public class PerChannelQueue implements ChannelQueue {
 				js.setStatus(PokeStatus.FAILURE);
 
 			js.setJobState(JobCode.JOBRECEIVED);
+			
+			//if the List returned is not null ,then associate it with the JobStatus
+			if(!jobDescList.isEmpty())
+			{
+				for(int i=0; i<jobDescList.size(); i++)
+					js.setData(i, jobDescList.get(i));
+			}
 
 			// payload containing data for job
 			Request.Builder r = Request.newBuilder();

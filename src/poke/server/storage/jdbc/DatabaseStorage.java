@@ -216,13 +216,16 @@ public class DatabaseStorage implements Storage {
 
 	@Override
 	public boolean updateJob(String namespace, JobDesc job) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
+	/**
+	 * @author Chitra
+	 * If the job action is 4 - List Jobs, then list all the jobs associated with that Job ID from the DB
+	 */
 	@Override
 	public List<JobDesc> findJobs(String namespace, JobDesc criteria) {
-		// TODO Auto-generated method stub
-		return null;
+		List<JobDesc> listJobs = mongodb.findJobs(namespace, criteria);
+			return listJobs;
 	}
 }

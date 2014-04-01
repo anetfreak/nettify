@@ -1,6 +1,8 @@
 package misc;
 
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
@@ -95,6 +97,40 @@ public class MongoDao {
 			return true;
 		else
 			return false;
+	}
+	
+	public List<JobDesc> findJobs(String namespace, JobDesc criteria){
+		
+		List<JobDesc> listJobs = null;
+		JobDesc.Builder job = JobDesc.newBuilder();
+		
+		DBCollection collection = getJobsCollection();
+		
+		BasicDBObject findQuery = new BasicDBObject();
+		List<BasicDBObject> obj = new ArrayList<BasicDBObject>();
+		obj.add(new BasicDBObject("Job ID", criteria.getJobId()));
+		obj.add(new BasicDBObject("NameSpace", namespace));
+		findQuery.put("$and", obj);
+		
+		System.out.println(findQuery.toString());
+		
+		DBCursor cursor = collection.find(findQuery);
+		
+		while(cursor.hasNext())
+		{
+			/*
+			job.setNameSpace(collection.);
+			doc.put("NameSpace", namespace);
+			doc.put("Owner ID", job.getOwnerId());
+			doc.put("Job ID", job.getJobId());
+			doc.put("Job Status Code", job.getStatus().name());
+			doc.put("Node Type", job.getOptions().getNodeType().getNumber());
+			doc.put("Name", job.getOptions().getName());
+			doc.put("Value", job.getOptions().getValue());
+			*/
+		}
+		 
+		return listJobs;
 	}
 
 }
