@@ -86,11 +86,11 @@ public class MongoDao {
 		BasicDBObject whereQuery = new BasicDBObject();
 		whereQuery.put("Job ID", jobId);
 		DBCursor cursor = collection.find(whereQuery);
-		while(cursor.hasNext()){
+		while(cursor.hasNext())
+		{
 			collection.remove(whereQuery);
 			count++;
 		}
-
 		if(count > 0)
 			return true;
 		else

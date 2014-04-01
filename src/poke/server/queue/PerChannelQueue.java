@@ -90,19 +90,19 @@ public class PerChannelQueue implements ChannelQueue {
 	{
 		Integer i_id = 0;
 		if(nodeId.equals("zero") ){
-				i_id = 0; 
+			i_id = 0; 
 		}
 		else if(nodeId.equals("one"))
 		{
-				i_id = 1; 
+			i_id = 1; 
 		}
 		else if(nodeId.equals("two"))
 		{
-				i_id = 2; 
+			i_id = 2; 
 		}
 		else if (nodeId.equals("three"))
 		{
-				i_id =3; 
+			i_id =3; 
 		}
 		return i_id;
 	}
@@ -229,15 +229,15 @@ public class PerChannelQueue implements ChannelQueue {
 		@Override
 		public void run() {
 			Channel conn = sq.channel;
-			
+
 			if (conn == null || !conn.isOpen()) {
 				PerChannelQueue.logger
-						.error("connection missing, no outbound communication");
+				.error("connection missing, no outbound communication");
 				return;
 			}
 			logger.info("PerChannel OutBoundWorker started...."
 					+ conn.toString() + conn.pipeline().toString());
-			
+
 
 			while (true) {
 				if (!forever && sq.outbound.size() == 0)
@@ -247,7 +247,7 @@ public class PerChannelQueue implements ChannelQueue {
 					// block until a message is enqueued
 					GeneratedMessage msg = sq.outbound.take();
 					System.out
-							.println("Got a message at server outbound queue");
+					.println("Got a message at server outbound queue");
 					if (conn.isWritable()) {
 						boolean rtn = false;
 						if (channel != null && channel.isOpen()
@@ -310,7 +310,7 @@ public class PerChannelQueue implements ChannelQueue {
 		public String getMyNode()
 		{
 			return ResourceFactory.getInstance().getCfg()
-			.getServer().getProperty("node.id");
+					.getServer().getProperty("node.id");
 		}
 		@Override
 		public void run() 
@@ -319,7 +319,7 @@ public class PerChannelQueue implements ChannelQueue {
 			logger.info("PerChannel InbondWorker started");
 			if (conn == null || !conn.isOpen()) {
 				PerChannelQueue.logger
-						.error("connection missing, no inbound communication");
+				.error("connection missing, no inbound communication");
 				return;
 			}
 
@@ -359,36 +359,66 @@ public class PerChannelQueue implements ChannelQueue {
 									Request result = createJobOperation(bidReq);
 									JobOpManager.getInstance().submitJobOperation(sq, result);
 								} 
-								else {
+								else 
+								{
 									logger.info("Received a JobOperation request . Checking if the request is for me.");
 									// Check if I have to handle the request
-									if (req.getHeader().getToNode().equals(getMyNode())) {
-										// access the database, do the operation
-										// sending the job desc object to the DB
-										try {
-											logger.info("My bidding was highest.. This JobOp request is for me.. Processing it..");
-											Boolean b = storage
-													.addJob(req.getBody()
-															.getJobOp().getData()
-															.getNameSpace(), req
-															.getBody().getJobOp()
-															.getData());
-											if (b)
-												logger.info("Job desc added to the DB..");
-											else
-												logger.info("Job desc not added to the DB");
-											
-											// create job status request
-											Request status = createJobStatus(req, b);
-											
-											// send the Job Status request back to the client
-											JobOpManager.getInstance().submitJobStatus(status);
-										} catch (Exception e) {
-											logger.info("Exception encountered in persisiting to the DB : "
-													+ e);
+									if (req.getHeader().getToNode().equals(getMyNode())) 
+									{
+										//if I get a job operation with ADD JOB code, then add to DB
+										if(req.getBody().getJobOp().getAction().getNumber() == 1)
+										{
+											try 
+											{
+												// access the database, do the operation
+												// sending the job desc object to the DB
+												logger.info("My bidding was highest.. This JobOp request is for me.. Processing it..");
+												Boolean b = storage
+														.addJob(req.getBody()
+																.getJobOp().getData()
+																.getNameSpace(), req
+																.getBody().getJobOp()
+																.getData());
+												if (b)
+													logger.info("Job desc added to the DB..");
+												else
+													logger.info("Job desc not added to the DB");
+
+												// create job status request
+												Request status = createJobStatus(req, b);
+
+												// send the Job Status request back to the client
+												JobOpManager.getInstance().submitJobStatus(status);
+											} catch (Exception e) {
+												logger.info("Exception encountered in persisiting to the DB : "
+														+ e);
+											}
+										}
+										//if I get a job operation with REMOVE JOB code, then add to DB
+										else if(req.getBody().getJobOp().getAction().getNumber() == 3)
+										{
+											try 
+											{
+												logger.info("My bidding was highest.. This JobOp request is for me.. Processing it..");
+												Boolean b = storage.removeJob(req.getBody().getJobOp().getData().getNameSpace(), req.getBody().getJobOp().getJobId());
+												if (b)
+													logger.info("Job desc removed from the DB..");
+												else
+													logger.info("Could not remove job desc from the DB");
+
+												// create job status request
+												Request status = createJobStatus(req, b);
+
+												// send the Job Status request back to the client
+												JobOpManager.getInstance().submitJobStatus(status);
+											} catch (Exception e) {
+												logger.info("Exception encountered in persisiting to the DB : "
+														+ e);
+											}
 										}
 
-									} else {
+									}
+									else {
 										logger.info("I do not have to serve this JobOp request. Forwarding it..");
 										// Forward the Job for other node tohandle
 										JobOpManager.getInstance().sendResponse(req);
@@ -405,22 +435,22 @@ public class PerChannelQueue implements ChannelQueue {
 									logger.info("Received a JobStatus request.. Forwarding it till it reaches the leader..");
 									// send to next node
 									JobOpManager.getInstance().submitJobStatus(req);
-							
+
+								}
+							} 
+							else {
+								// handle it locally
+								reply = rsc.process(req);
+								sq.enqueueResponse(reply, null);
 							}
-						} 
-						else {
-							// handle it locally
-							reply = rsc.process(req);
-							sq.enqueueResponse(reply, null);
 						}
+					} }catch (InterruptedException ie) {
+						break;
+					} catch (Exception e) {
+						PerChannelQueue.logger.error(
+								"Unexpected processing failure", e);
+						break;
 					}
-				} }catch (InterruptedException ie) {
-					break;
-				} catch (Exception e) {
-					PerChannelQueue.logger.error(
-							"Unexpected processing failure", e);
-					break;
-				}
 			}
 
 			if (!forever) {
@@ -459,8 +489,8 @@ public class PerChannelQueue implements ChannelQueue {
 			logger.info("Pushing the request to the client channel..! In submitJobStatus()");
 			sq.enqueueResponse(jobstatusreq, null);
 		}
-		
-		
+
+
 		/**
 		 * If the Job has been processed by the cluster : create a Job Status request
 		 * @param jobOp
@@ -474,7 +504,7 @@ public class PerChannelQueue implements ChannelQueue {
 				js.setStatus(PokeStatus.SUCCESS);
 			else
 				js.setStatus(PokeStatus.FAILURE);
-			
+
 			js.setJobState(JobCode.JOBRECEIVED);
 
 			// payload containing data for job
@@ -493,7 +523,7 @@ public class PerChannelQueue implements ChannelQueue {
 
 			r.setHeader(h.build());
 			Request req = r.build();
-		
+
 			logger.info("New Job reply status request formed.. Sending it back to the client");
 			return req;
 		}
