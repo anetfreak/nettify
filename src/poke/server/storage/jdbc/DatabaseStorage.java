@@ -45,7 +45,7 @@ public class DatabaseStorage implements Storage {
 	protected BoneCP cpool;
 
 	MongoDao mongodb = new MongoDao();
-	
+
 	public DatabaseStorage() {
 	}
 
@@ -188,23 +188,30 @@ public class DatabaseStorage implements Storage {
 		return false;
 	}
 
+
 	/**
-	 * Adding a new JobOperation to the MongoDB - TESTING
+	 * Adding a new JobOperation to the MongoDB if the JobAction is 1 - AddJob
 	 * @author Chitra
 	 */
 	@Override
 	public boolean addJob(String namespace, JobDesc job) {
-		// TODO Auto-generated method stub
 		if(mongodb.addJob(namespace, job))
 			return true;
 		else
 			return false;
 	}
 
+	/**
+	 * @author Chitra
+	 * If the Job action is 3 - Remove Job, then Remove the job from the DB according to the Job ID
+	 */
+
 	@Override
 	public boolean removeJob(String namespace, String jobId) {
-		// TODO Auto-generated method stub
-		return false;
+		if(mongodb.removeJob(namespace, jobId))
+			return true;
+		else
+			return false;
 	}
 
 	@Override
