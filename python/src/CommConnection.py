@@ -49,7 +49,7 @@ class CommConnection():
             print sys.exc_info()[0]
         finally:
             print "finally!!"
-            #group.shutdownGracefully()
+            group.shutdownGracefully()
     
     def poke(self):
         ping = Ping.newBuilder()

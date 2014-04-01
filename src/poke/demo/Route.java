@@ -15,6 +15,10 @@
  */
 package poke.demo;
 
+import eye.Comm.JobDesc;
+import eye.Comm.JobDesc.JobCode;
+import eye.Comm.JobOperation.JobAction;
+import eye.Comm.NameValueSet;
 import poke.client.ClientCommand;
 import poke.client.ClientPrintListener;
 import poke.client.comm.CommListener;
@@ -34,21 +38,27 @@ public class Route {
 	}
 
 	public void run() {
-		ClientCommand cc = new ClientCommand("192.168.0.21", 5570);
-		CommListener listener = new ClientPrintListener("jab demo");
+		ClientCommand cc = new ClientCommand("192.168.0.27", 5570);
+		CommListener listener = new ClientPrintListener("route demo");
 		cc.addListener(listener);
 		
-		for (int i = 0; i < 3; i++) {
-			count++;
-			cc.poke(tag, count);
-		}
+		NameValueSet.Builder value = NameValueSet.newBuilder();
+		value.setName("Test");
+		value.setValue("Test");
 		
+		JobDesc.Builder desc = JobDesc.newBuilder();
+		desc.setNameSpace("Engineering");
+		desc.setJobId("Zero");
+		desc.setOwnerId(0);
+		desc.setStatus(JobCode.JOBUNKNOWN);
+		desc.setOptions(value.build());
 		
+		cc.sendRequest(JobAction.ADDJOB, "Zero", desc.build());
 	}
 
 	public static void main(String[] args) {
 		try {
-			Route jab = new Route("jab");
+			Route jab = new Route("route");
 			jab.run();
 
 			// we are running asynchronously
