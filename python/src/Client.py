@@ -4,4 +4,4 @@ class Client():
 
   def run(self, host, port):
 #     CommConnection(host, port).poke()
-    CommConnection(host, port).addJobReq()
+    CommConnection(host, port).jobrequest()
