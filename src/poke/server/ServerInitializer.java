@@ -1,7 +1,10 @@
 package poke.server;
 
-import java.util.logging.Logger;
 
+import java.util.List;
+
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
@@ -11,6 +14,9 @@ import io.netty.handler.codec.compression.ZlibCodecFactory;
 import io.netty.handler.codec.compression.ZlibWrapper;
 import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
+import io.netty.buffer.ByteBuf;
+
+import com.google.protobuf.MessageLite;
 
 public class ServerInitializer extends ChannelInitializer<SocketChannel> {
 	boolean compress = false;
@@ -18,7 +24,46 @@ public class ServerInitializer extends ChannelInitializer<SocketChannel> {
 	public ServerInitializer(boolean enableCompression) {
 		compress = enableCompression;
 	}
+	
+	public class my_lineframedecoder extends LengthFieldBasedFrameDecoder{
+		
+		public my_lineframedecoder(
+	            int maxFrameLength,
+	            int lengthFieldOffset, int lengthFieldLength,
+	            int lengthAdjustment, int initialBytesToStrip)
+	            {
+	            	super(maxFrameLength,lengthFieldOffset,lengthFieldLength,lengthAdjustment,initialBytesToStrip);
+	            }
+		@Override
+	    protected Object decode(
+	            ChannelHandlerContext ctx, ByteBuf arg1) throws Exception {
+				final int length = arg1.readableBytes();
+				System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&& Length in frame decoder: "+length);
+				System.out.println("Buffer: " + arg1.getUnsignedInt(4));
+				return super.decode(ctx, arg1);
+		}
+	}
+	public class my_protpbufDecoder extends ProtobufDecoder{
 
+		public my_protpbufDecoder(MessageLite prototype) {
+			super(prototype);
+			// TODO Auto-generated constructor stub
+		}
+		
+		   @Override
+		    protected void decode(
+		            ChannelHandlerContext ctx, ByteBuf arg1, List<Object> msg) throws Exception {
+		        //if (!(msg instanceof ChannelBuffer)) {
+		         //   return msg;
+		        //}
+			   final int length = arg1.readableBytes();
+			   System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&& Length: "+length);
+		        super.decode(ctx,arg1,msg);
+		        //ChannelBuffer buf = (ChannByteBuf::belBuffer) msg;
+		        
+		    }
+		
+	}
 	@Override
 	public void initChannel(SocketChannel ch) throws Exception {
 		ChannelPipeline pipeline = ch.pipeline();
