@@ -1,5 +1,6 @@
 from SocketChannel import SocketChannel, SocketChannelFactory
 from comm_pb2 import Request, Header, Payload, RoutingPath
+import struct
 
 class PyClient():
   def __init__(self):
@@ -13,11 +14,16 @@ class PyClient():
       header = request.header
       body = request.body
       
-      header.routing_id = 4
+      header.routing_id = 2
       header.originator = "zero"
-      job_op = body.job_op
-      job_op.action = 4
-      job_op.job_id = "zero"
+      ping = body.ping
+      ping.number = 4
+      ping.tag = "zero"
+
+      message = request.SerializeToString()
+      self.channel.write(struct.pack(str(len(message)) + "s", message))
       
-      self.channel.write(request.SerializeToString())
-      continue
+      resp = Request()
+      print self.channel.read()
+#       print resp.parseFromString(self.channel.read())
+      self.channel.close()
