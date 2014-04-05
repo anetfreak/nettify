@@ -1,3 +1,4 @@
+//Google Protobuf version fixed to 2.5.0 for inter cluster comm..
 
 option optimize_for = SPEED;
 option java_package = "eye";
@@ -16,13 +17,13 @@ enum PokeStatus {
    FAILURE = 199;
 }
 
-// data - a hierartical container to send/receive name-value pairs
+// data - a hierarchical container to send/receive name-value pairs
 message NameValueSet {
     // a node should not have a value though this is not enforced
-    required NodeType node_type = 1;
+    required NodeType node_type = 1; //create this for response and then attach values if req. For single value just use value.
 
-    optional string name = 2;
-    optional string value = 3;
+    optional string name = 2; // coursename | coursedescription
+    optional string value = 3; //example value- cmpe275 | Dist systems.
 
     // nested NVPs
     repeated NameValueSet node = 4;
@@ -50,11 +51,11 @@ message NameSpace {
 
 // data - a job description
 message JobDesc {
-   required string name_space = 1;
-   required int64 owner_id = 2;
-   required string job_id = 3;
-   required JobCode status = 4;
-   optional NameValueSet options = 5;
+   required string name_space = 1; // signup (o), listcourses, getdescription - same for req & resp
+   required int64 owner_id = 2; // Random int from client
+   required string job_id = 3; // Random string form the client
+   required JobCode status = 4; //JOBUNKNOWN from client, QUEUED,RUNNING,RECEIVED for the response
+   optional NameValueSet options = 5; // Should be set when sending the response back to a cluster or to the client
 
    enum JobCode {
        JOBUNKNOWN = 1;
@@ -108,7 +109,7 @@ message JobOperation {
    optional JobDesc data = 3;
 
    enum JobAction {
-      ADDJOB = 1;
+      ADDJOB = 1; // Always this in the inter-cluster comm
       STOPJOB = 2;
       REMOVEJOB = 3;
       LISTJOBS = 4;
@@ -126,7 +127,7 @@ message JobProposal {
    required int32 weight  = 4;
 
    // properties of the job
-   optional NameValueSet options = 5;
+   optional NameValueSet options = 5; // to be used in listcourses response
 }
 
 // request - a node's bid for running a job (a response in the form of a request)
