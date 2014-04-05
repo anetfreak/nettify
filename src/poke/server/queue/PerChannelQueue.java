@@ -459,12 +459,26 @@ public class PerChannelQueue implements ChannelQueue {
 
 								}
 							} 
-							else {
-								// handle it locally
-								reply = rsc.process(req);
-								sq.enqueueResponse(reply, null);
-							}
+//							else {
+//								// handle it locally
+//								logger.info("Processing ping requests here..");
+//								logger.info("Request received - ", req);
+//								logger.info("Reply to be sent - ", reply);
+//								reply = rsc.process(req);
+//								sq.enqueueResponse(reply, null);
+//							}
 						}
+						
+						else {
+							// handle it locally
+							logger.info("Processing ping requests here..");
+							logger.info("Request received - ", req.toString());
+							logger.info("Reply to be sent - ", reply.toString());
+							reply = rsc.process(req);
+							sq.enqueueResponse(reply, null);
+						}
+						
+						
 					} }catch (InterruptedException ie) {
 						break;
 					} catch (Exception e) {
