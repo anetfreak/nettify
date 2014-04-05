@@ -20,3 +20,4 @@ class PyClient():
       job_op.job_id = "zero"
       
       self.channel.write(request.SerializeToString())
+      continue
