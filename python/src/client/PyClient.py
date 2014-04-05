@@ -24,6 +24,5 @@ class PyClient():
       self.channel.write(struct.pack(str(len(message)) + "s", message))
       
       resp = Request()
-      print self.channel.read()
-#       print resp.parseFromString(self.channel.read())
+      print struct.unpack(resp.ParseFromString(self.channel.read()))
       self.channel.close()
