@@ -22,11 +22,14 @@ class PyClient():
           ping.number = 4
           ping.tag = "zero"
     
-          message = request.SerializeToString()
-          self.channel.write(struct.pack(str(len(message)) + "s", message))
-          
+          self.channel.write(request.SerializeToString())
           resp = Request()
-          print resp.ParseFromString(self.channel.read())
+          resp.ParseFromString(self.channel.read())
+          print "\n==Response Received from Server==\n"
+          print "RoutingID - " + str(resp.header.routing_id)
+          print "Originator - " + str(resp.header.originator)
+          print "Ping Number - " + str(resp.body.ping.number)
+          print "Ping Tag - " + str(resp.body.ping.tag)
           
       except:
         print sys.exc_info()[0]

@@ -473,8 +473,8 @@ public class PerChannelQueue implements ChannelQueue {
 							// handle it locally
 							logger.info("Processing ping requests here..");
 							logger.info("Request received - ", req.toString());
-							logger.info("Reply to be sent - ", reply.toString());
 							reply = rsc.process(req);
+							logger.info("Reply to be sent - ", reply.toString());
 							sq.enqueueResponse(reply, null);
 						}
 						
