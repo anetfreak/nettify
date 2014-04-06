@@ -27,7 +27,10 @@ if __name__ == '__main__':
           PyClient().chooseOperation(requestType, host, port)
       elif choice == 2:
           #Sending Ping Request to Server
-          print ""  
+          requestType = "listcourses"
+          host = str(input("Enter host: "))
+          port = int(input("Enter port: "))
+          PyClient().chooseOperation(requestType, host, port)
       elif choice == 3:
           #Sending Ping Request to Server
           print ""
