@@ -58,5 +58,3 @@ class SocketChannel():
   def close(self):
     self.sock.close()
     self.connected = False
-    
-    
