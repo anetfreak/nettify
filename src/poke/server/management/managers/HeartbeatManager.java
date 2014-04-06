@@ -236,7 +236,7 @@ public class HeartbeatManager extends Thread {
 					// send my status (heartbeatMgr)
 					GeneratedMessage msg = null;
 					for (HeartbeatData hd : outgoingHB.values()) {
-			/*			
+						
 						logger.info("beat (" + nodeId + ") sent to " + hd.getNodeId() + " at " + hd.getHost() + hd.channel.remoteAddress());
 						
 						// if failed sends exceed threshold, stop sending
@@ -249,7 +249,7 @@ public class HeartbeatManager extends Thread {
 
 						try {
 							//Begin Amit
-							logger.info("sending heartbeat");
+							//logger.info("sending heartbeat");
 							hd.channel.writeAndFlush(msg);
 							hd.setLastBeatSent(System.currentTimeMillis());
 							hd.setFailuresOnSend(0);
@@ -261,7 +261,7 @@ public class HeartbeatManager extends Thread {
 							logger.error("Failed " + hd.getFailures() + " times to send HB for " + hd.getNodeId()
 									+ " at " + hd.getHost(), e);
 						}
-					*/	
+					
 					}
 					
 				} else

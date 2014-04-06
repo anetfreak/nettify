@@ -108,11 +108,6 @@ private:
     {
         assert(buf.size() >= HEADER_SIZE);
 
-        buf[0] = static_cast<boost::uint8_t>(0 & 0xFF);
-        buf[1] = static_cast<boost::uint8_t>(0 & 0xFF);
-        buf[2] = static_cast<boost::uint8_t>(0 & 0xFF);
-        buf[3] = static_cast<boost::uint8_t>(0 & 0xFF);
-
         buf[0] = static_cast<boost::uint8_t>((size >> 24) & 0xFF);
         buf[1] = static_cast<boost::uint8_t>((size >> 16) & 0xFF);
         buf[2] = static_cast<boost::uint8_t>((size >> 8) & 0xFF);

@@ -182,7 +182,7 @@ public class HeartbeatConnector extends Thread {
 						try {
 							for(int j =0;j<2;j++)
 							{
-								logger.info("attempting to connect to node: " + hb.getNodeInfo());
+								//logger.info("attempting to connect to node: " + hb.getNodeInfo());
 								hb.startHeartbeat();
 								Thread.sleep(500);
 								if(hb.isConnected())

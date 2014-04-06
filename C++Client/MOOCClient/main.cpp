@@ -50,9 +50,12 @@ SockConn *conn;
 
 Request* createRequest()
 {
-    Ping *ping = new Ping();
-    ping->set_tag("test job");
-    ping->set_number(5);
+    //int type = 0;
+    //select(type)
+    //case 0:
+        Ping *ping = new Ping();
+        ping->set_tag("test job");
+        ping->set_number(5);
 /*
     JobOperation *jobOp = new JobOperation();
     jobOp->set_action(JobOperation_JobAction_ADDJOB);
@@ -74,7 +77,7 @@ Request* createRequest()
     std::string *orignator = new std::string("client");
     h->set_allocated_originator(orignator);
     h->set_tag("test finger");
-    h->set_routing_id(Header_Routing_JOBS);
+    h->set_routing_id(Header_Routing_PING);
     r->set_allocated_header(h);
     return r;
 

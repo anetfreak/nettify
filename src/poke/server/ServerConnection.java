@@ -134,14 +134,14 @@ public class ServerConnection {
 
 	protected void checkandChangeConn() {
 		String currNode = ElectionManager.getInstance().getCurrentNode();
-		logger.info("curr Node: " + currNode);
+		//logger.info("curr Node: " + currNode);
 		if (!currNode.equals("")) {
 			ServerConf conf = ResourceFactory.getInstance().getCfg();
-			logger.info("ServerConf: " + conf);
+			//logger.info("ServerConf: " + conf);
 			NodeDesc node = conf.getNearest().getNearestNodes().get(currNode);
-			logger.info("NodeDesc:" + node);
+			//logger.info("NodeDesc:" + node);
 			String nextHost = node.getHost();
-			logger.info("nextHost: " + nextHost);
+			//logger.info("nextHost: " + nextHost);
 			int nextPort = node.getPort();
 			if (!nextHost.equals(host) || nextPort != port) {
 				logger.info("Next Node Changed from host: " + host + ":" + port
@@ -180,8 +180,7 @@ public class ServerConnection {
 				conn.checkandChangeConn();
 				ch = conn.connect();
 				if (ch == null || !ch.isOpen()) {
-					ServerConnection.logger
-							.error("connection missing, no outbound communication");
+					//ServerConnection.logger.error("connection missing, no outbound communication");
 					try {
 						Thread.sleep(500);
 					} catch (InterruptedException e) {

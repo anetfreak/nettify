@@ -642,8 +642,11 @@ public class PerChannelQueue implements ChannelQueue {
 		@Override
 		public void operationComplete(ChannelFuture future) throws Exception {
 			logger.info("Write complete");
-			logger.info("isSuccess: " + future.isSuccess());
-			logger.info("Cause: " + future.cause());
+			if(future.isSuccess() !=true)
+			{
+				logger.info("isSuccess: " + future.isSuccess());
+				logger.info("Cause: " + future.cause());
+			}
 			// sq.shutdown(true);
 		}
 	}
