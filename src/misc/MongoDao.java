@@ -1,7 +1,6 @@
 package misc;
 
 import java.net.UnknownHostException;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,6 +8,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoException;
 
@@ -160,6 +160,66 @@ public class MongoDao {
 		}
 		 
 		return listJobs;
+	}
+	
+	public DBCollection getExternalNodesCollection()
+	{
+		//Connect to Mongo DB..
+		MongoClient mongo;
+		DBCollection collection = null;
+		try {
+			mongo = new MongoClient("localhost", 27017);
+			//Create DB..
+			DB mongodb = mongo.getDB("nettify");
+			collection = mongodb.getCollection("extNodes");
+		} catch (UnknownHostException e) {
+			System.out.println("Exception in Connection to Mongo " + e);
+		}
+		catch(MongoException me) {
+			me.printStackTrace();
+		}
+		return collection;
+	}
+	
+	public boolean addExtNode(ExtNode eNode) {
+
+		try {
+			DBCollection collection = getExternalNodesCollection();
+			//Insert..
+			BasicDBObject doc = new BasicDBObject();
+			doc.put("Name", eNode.getName());
+			doc.put("ip", eNode.getIp());
+			doc.put("port", eNode.getPort());
+			doc.put("mgmtPort", eNode.getMgmtPort());
+			collection.insert(doc);
+			return true;
+		} 
+		catch(MongoException me) {
+			me.printStackTrace();
+		}
+		return false;
+	}
+	
+	public ArrayList<ExtNode> findExtNodes(){
+		
+		ArrayList<ExtNode> extNodes = new ArrayList<ExtNode>();
+		DBCollection collection = getExternalNodesCollection();
+		DBCursor cursor = collection.find();
+		
+		while(cursor.hasNext())
+		{
+			DBObject obj = cursor.next();
+			ExtNode eNode = new ExtNode();
+			
+			eNode.setName(obj.get("Name").toString());
+			eNode.setIp(obj.get("ip").toString());
+			eNode.setPort((int) obj.get("port"));
+			eNode.setMgmtPort((int) obj.get("mgmtPort"));
+			
+			extNodes.add(eNode);
+		}
+		 
+		return extNodes;
 	}
 
 }
