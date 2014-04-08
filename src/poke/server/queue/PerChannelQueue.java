@@ -536,6 +536,7 @@ public class PerChannelQueue implements ChannelQueue {
 		 */
 		public Request createJobStatus(Request jobOp, boolean b, List<JobDesc> jobDescList)
 		{
+			logger.info("Request is: \n",jobOp.toString());
 			logger.info("Inside createJobStatus() ..");
 			JobStatus.Builder js = JobStatus.newBuilder();
 			js.setJobId(jobOp.getBody().getJobOp().getJobId());
