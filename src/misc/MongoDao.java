@@ -260,5 +260,24 @@ public class MongoDao {
 		 
 		return extNodes;
 	}
+	
+	public boolean addCourses(ArrayList<Course> courses) {
+
+		try {
+			DBCollection collection = getCoursesCollection();
+			//Insert..
+			for(Course course : courses) {
+				BasicDBObject doc = new BasicDBObject();
+				doc.put("CourseName", course.getName());
+				doc.put("Description", course.getDesc());
+				collection.insert(doc);
+			}
+			return true;
+		} 
+		catch(MongoException me) {
+			me.printStackTrace();
+		}
+		return false;
+	}
 
 }

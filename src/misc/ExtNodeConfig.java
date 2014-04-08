@@ -15,7 +15,8 @@ public class ExtNodeConfig {
 			System.out.println("1. Add a new external node");
 			System.out.println("2. Update an external node");
 			System.out.println("3. Display all external nodes");
-//			System.out.println("4. Exit");
+			System.out.println("4. Add Courses");
+//			System.out.println("5. Exit");
 			
 			System.out.println("\nEnter your choice -> ");
 			
@@ -58,7 +59,30 @@ public class ExtNodeConfig {
 							System.out.println("Node Management Port : " + eNode.getMgmtPort() + "\n");
 						}
 					
-					case 4:
+					case 4: 
+						ArrayList<Course> courses = new ArrayList<Course>();
+						Course course = new Course();
+						course.setName("CMPE275");
+						course.setDesc("Enterprise Application Development");
+						courses.add(course);
+						course = new Course();
+						course.setName("CMPE277");
+						course.setDesc("Smartphone Application Development");
+						courses.add(course);
+						course = new Course();
+						course.setName("CS101");
+						course.setDesc("Introduction to Computer Science");
+						courses.add(course);
+						course = new Course();
+						course.setName("CMPE282");
+						course.setDesc("Cloud Computing");
+						courses.add(course);
+						course = new Course();
+						course.setName("CS255");
+						course.setDesc("Advanced Databases");
+						courses.add(course);
+						mongoDao.addCourses(courses);						
+					case 5:
 //						displayMenu = false;
 						
 				}
