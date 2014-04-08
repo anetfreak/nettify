@@ -45,6 +45,9 @@ import eye.Comm.JobDesc.JobCode;
 import eye.Comm.JobOperation;
 import eye.Comm.JobStatus;
 import eye.Comm.Management;
+import eye.Comm.NameSpace;
+import eye.Comm.NameValueSet;
+import eye.Comm.NameValueSet.NodeType;
 import eye.Comm.Payload;
 import eye.Comm.PokeStatus;
 import eye.Comm.Request;
@@ -226,7 +229,7 @@ public class PerChannelQueue implements ChannelQueue {
 
 			if (conn == null || !conn.isOpen()) {
 				PerChannelQueue.logger
-						.error("connection missing, no outbound communication");
+				.error("connection missing, no outbound communication");
 				return;
 			}
 			logger.info("PerChannel OutBoundWorker started...."
@@ -240,7 +243,7 @@ public class PerChannelQueue implements ChannelQueue {
 					// block until a message is enqueued
 					GeneratedMessage msg = sq.outbound.take();
 					System.out
-							.println("Got a message at server outbound queue");
+					.println("Got a message at server outbound queue");
 					if (conn.isWritable()) {
 						boolean rtn = false;
 						if (channel != null && channel.isOpen()
@@ -313,7 +316,7 @@ public class PerChannelQueue implements ChannelQueue {
 			logger.info("PerChannel InbondWorker started");
 			if (conn == null || !conn.isOpen()) {
 				PerChannelQueue.logger
-						.error("connection missing, no inbound communication");
+				.error("connection missing, no inbound communication");
 				return;
 			}
 
@@ -351,7 +354,7 @@ public class PerChannelQueue implements ChannelQueue {
 									JobBid bidReq = waitForBid();
 									Request result = createJobOperation(bidReq);
 									JobOpManager.getInstance()
-											.submitJobOperation(sq, result);
+									.submitJobOperation(sq, result);
 								} else {
 									logger.info("Received a JobOperation request . Checking if the request is for me.");
 									// Check if I have to handle the request
@@ -363,33 +366,40 @@ public class PerChannelQueue implements ChannelQueue {
 										if (req.getBody().getJobOp()
 												.getAction().getNumber() == 1) {
 											try {
-												// access the database, do the
-												// operation
-												// sending the job desc object
-												// to the DB
-												Boolean b = storage.addJob(req
-														.getBody().getJobOp()
-														.getData()
-														.getNameSpace(), req
-														.getBody().getJobOp()
-														.getData());
+												String addRequest = req.getBody().getJobOp().getData().getNameSpace();
+												boolean b = false;
+												// access the database, if description has "listcourses", then retrieve all the courses from the DB
+												if(addRequest.equals("listcourses"))
+												{
+													List<String> coursesName = storage.listCourses();
+													if(coursesName.isEmpty())
+														logger.info("No courses exists in the DB");
+													else{
+														logger.info("Courses present in the DB");
+														b = true;
+													}
+													logger.info("Courses fetched from the DB");
+													Request status = createStatus(req, b, coursesName);
+
+													logger.info("Created status request for Job Operation.. ");
+													JobOpManager.getInstance().submitJobStatus(status);
+													logger.info("Forwarding the Status Request");
+												}
+
+												/*Boolean b = storage.addJob(req.getBody().getJobOp().getData().getNameSpace(), req.getBody().getJobOp().getData());
 												if (b)
 													logger.info("Job desc added to the DB..");
 												else
 													logger.info("Job desc not added to the DB");
-
-												logger.info("Job persisted.. Creating status response for client");
-												// create job status request
-												Request status = createJobStatus(
-														req, b, null);
-
+												 create job status request
+												Request status = createJobStatus(req, b, null);
 												logger.info("Created status request for Job Operation.. ");
-												// send the Job Status request
-												// back to the client
+												 send the Job Status request
+												 back to the client
 												JobOpManager
-														.getInstance()
-														.submitJobStatus(status);
-												logger.info("Forwarding the Status Request");
+												.getInstance()
+												.submitJobStatus(status);
+												logger.info("Forwarding the Status Request");*/
 
 											} catch (Exception e) {
 												logger.info("Exception encountered in persisiting to the DB : "
@@ -405,12 +415,12 @@ public class PerChannelQueue implements ChannelQueue {
 												Boolean b = storage
 														.removeJob(
 																req.getBody()
-																		.getJobOp()
-																		.getData()
-																		.getNameSpace(),
+																.getJobOp()
+																.getData()
+																.getNameSpace(),
 																req.getBody()
-																		.getJobOp()
-																		.getJobId());
+																.getJobOp()
+																.getJobId());
 												if (b)
 													logger.info("Job desc removed from the DB..");
 												else
@@ -423,8 +433,8 @@ public class PerChannelQueue implements ChannelQueue {
 												// send the Job Status request
 												// back to the client
 												JobOpManager
-														.getInstance()
-														.submitJobStatus(status);
+												.getInstance()
+												.submitJobStatus(status);
 											} catch (Exception e) {
 												logger.info("Exception encountered in removing entries from the DB : "
 														+ e);
@@ -439,23 +449,23 @@ public class PerChannelQueue implements ChannelQueue {
 												List<JobDesc> listJobs = storage
 														.findJobs(
 																req.getBody()
-																		.getJobOp()
-																		.getData()
-																		.getNameSpace(),
+																.getJobOp()
+																.getData()
+																.getNameSpace(),
 																req.getBody()
-																		.getJobOp()
-																		.getData());
-												if (!listJobs.isEmpty()) {
+																.getJobOp()
+																.getData());
+												if (listJobs != null) {
 													b = true;
 													logger.info("Fetched job lists from the DB for JObID : "
 															+ req.getBody()
-																	.getJobOp()
-																	.getJobId());
+															.getJobOp()
+															.getJobId());
 												} else
 													logger.info("No Jobs found with the JobID : "
 															+ req.getBody()
-																	.getJobOp()
-																	.getJobId());
+															.getJobOp()
+															.getJobId());
 
 												// create job status request
 												Request status = createJobStatus(
@@ -464,8 +474,8 @@ public class PerChannelQueue implements ChannelQueue {
 												// send the Job Status request
 												// back to the client
 												JobOpManager
-														.getInstance()
-														.submitJobStatus(status);
+												.getInstance()
+												.submitJobStatus(status);
 											} catch (Exception e) {
 												logger.info("Exception encountered in finding data from the DB : "
 														+ e);
@@ -476,7 +486,7 @@ public class PerChannelQueue implements ChannelQueue {
 										// Forward the Job for other node
 										// tohandle
 										JobOpManager.getInstance()
-												.sendResponse(req);
+										.sendResponse(req);
 									}
 								}
 							}
@@ -562,6 +572,70 @@ public class PerChannelQueue implements ChannelQueue {
 			sq.enqueueResponse(jobstatusreq, null);
 		}
 
+
+		public Request createStatus(Request jobOp, boolean b, List<String> coursesList){
+			try
+			{
+				logger.info("Inside createStatus()..");
+				JobStatus.Builder js = JobStatus.newBuilder();
+
+				js.setJobId(jobOp.getBody().getJobOp().getData().getJobId());
+
+				if (b)
+					js.setStatus(PokeStatus.SUCCESS);
+				else
+					js.setStatus(PokeStatus.FAILURE);
+
+				js.setJobState(JobCode.JOBRECEIVED);
+
+				if(coursesList != null)
+				{
+					logger.info("courses list is not empty..");
+					JobDesc.Builder jdesc = JobDesc.newBuilder();
+					jdesc.setNameSpace(jobOp.getBody().getJobOp().getData().getJobId());
+					jdesc.setOwnerId((jobOp.getBody().getJobOp().getData().getOwnerId()));
+					jdesc.setJobId((jobOp.getBody().getJobOp().getData().getJobId()));
+					jdesc.setStatus(JobCode.JOBRECEIVED);
+
+					NameValueSet.Builder nameVal = NameValueSet.newBuilder();
+					nameVal.setNodeType(NodeType.NODE);
+					NameValueSet.Builder nameV = NameValueSet.newBuilder();
+
+					for(int i=0; i<coursesList.size(); i++){
+						nameV.setName("coursename");
+						nameV.setValue(coursesList.get(i));
+						nameVal.addNode(nameV);
+					}
+
+					jdesc.setOptions(nameVal);
+					js.setData(0, jdesc);
+				}
+
+				// payload containing data for job
+				Request.Builder r = Request.newBuilder();
+				eye.Comm.Payload.Builder p = Payload.newBuilder();
+				p.setJobStatus(js.build());
+				r.setBody(p.build());
+
+				// header with routing info
+				Header.Builder h = Header.newBuilder();
+				h.setOriginator(getMyNode());
+				h.setTag(jobOp.getHeader().getTag());
+				h.setTime(jobOp.getHeader().getTime());
+				h.setRoutingId(jobOp.getHeader().getRoutingId());
+				h.setToNode("client");
+
+				r.setHeader(h.build());
+				Request req = r.build();
+				logger.info("New Job reply status request formed.. Sending it back to the client");
+				return req;
+			} catch (Exception npe) {
+				npe.printStackTrace();
+			}
+			return null;
+		}
+
+
 		/**
 		 * If the Job has been processed by the cluster : create a Job Status
 		 * request
@@ -569,8 +643,7 @@ public class PerChannelQueue implements ChannelQueue {
 		 * @param jobOp
 		 * @return
 		 */
-		public Request createJobStatus(Request jobOp, boolean b,
-				List<JobDesc> jobDescList) {
+		public Request createJobStatus(Request jobOp, boolean b, List<JobDesc> jobDescList) {
 			try {
 				logger.info("Request is: \n", jobOp.toString());
 				logger.info("Inside createJobStatus() ..");
@@ -626,7 +699,6 @@ public class PerChannelQueue implements ChannelQueue {
 				npe.printStackTrace();
 			}
 			return null;
-
 		}
 
 		public Request createJobOperation(JobBid bidReq) {

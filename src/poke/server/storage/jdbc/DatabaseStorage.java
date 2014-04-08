@@ -228,4 +228,14 @@ public class DatabaseStorage implements Storage {
 		List<JobDesc> listJobs = mongodb.findJobs(namespace, criteria);
 			return listJobs;
 	}
+
+	/**
+	 * @author chitra
+	 * @return
+	 * If a request is received for listcourses, then display all the courses from the database
+	 */
+	public List<String> listCourses() {
+		List<String> courses = mongodb.listCourses();
+		return courses;
+	}
 }

@@ -105,6 +105,26 @@ public class MongoDao {
 	
 	/**
 	 * @author chitra
+	 * @return
+	 * if a request is sent for listcourses, then add all the courses names to a list and send it back
+	 */
+	public List<String> listCourses(){
+		
+		List<String> coursesName = null;
+		
+		DBCollection collection = getJobsCollection();
+		BasicDBObject findQuery = new BasicDBObject();
+		DBCursor cursor = collection.find(findQuery);
+		while(cursor.hasNext()) {
+			System.out.println(cursor.next());
+			coursesName.add(cursor.curr().get("CourseName").toString());
+		}
+		return coursesName;
+	}
+	
+	
+	/**
+	 * @author chitra
 	 * @param namespace
 	 * @param criteria
 	 * @return
