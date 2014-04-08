@@ -623,7 +623,7 @@ public class PerChannelQueue implements ChannelQueue {
 				Request req = r.build();
 				logger.info("New Job reply status request formed.. Sending it back to the client");
 				return req;
-			} catch (NullPointerException npe) {
+			} catch (Exception npe) {
 				npe.printStackTrace();
 			}
 			return null;
