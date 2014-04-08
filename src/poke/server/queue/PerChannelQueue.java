@@ -381,17 +381,17 @@ public class PerChannelQueue implements ChannelQueue {
 												else
 													logger.info("Job desc not added to the DB");
 
+												logger.info("Job persisted.. Creating status response for client");
 												// create job status request
 												Request status = createJobStatus(req, b, null);
 
-												logger.info("Creating status request for Job Operation.. ");
+												logger.info("Created status request for Job Operation.. ");
 												// send the Job Status request back to the client
 												JobOpManager.getInstance().submitJobStatus(status);
 												logger.info("Forwarding the Status Request");
 												
 											} catch (Exception e) {
-												logger.info("Exception encountered in persisiting to the DB : "
-														+ e);
+												logger.info("Exception encountered in persisiting to the DB : "+ e);
 											}
 										}
 										//if I get a job operation with REMOVE JOB code, then readdmove then job from the DB
@@ -411,7 +411,7 @@ public class PerChannelQueue implements ChannelQueue {
 												// send the Job Status request back to the client
 												JobOpManager.getInstance().submitJobStatus(status);
 											} catch (Exception e) {
-												logger.info("Exception encountered in persisiting to the DB : "
+												logger.info("Exception encountered in removing entries from the DB : "
 														+ e);
 											}
 										}
@@ -438,7 +438,7 @@ public class PerChannelQueue implements ChannelQueue {
 											}
 											catch(Exception e)
 											{
-												logger.info("Exception encountered in persisiting to the DB : "+ e);
+												logger.info("Exception encountered in finding data from the DB : "+ e);
 											}
 										}
 									}
@@ -536,6 +536,7 @@ public class PerChannelQueue implements ChannelQueue {
 		 */
 		public Request createJobStatus(Request jobOp, boolean b, List<JobDesc> jobDescList)
 		{
+			logger.info("Inside createJobStatus() ..");
 			JobStatus.Builder js = JobStatus.newBuilder();
 			js.setJobId(jobOp.getBody().getJobOp().getJobId());
 			if(b)
@@ -548,10 +549,20 @@ public class PerChannelQueue implements ChannelQueue {
 			//if the List returned is not null ,then associate it with the JobStatus
 			if(!jobDescList.isEmpty())
 			{
+				logger.info("List of Job Desc retireved from DB is not null.. !!");
 				for(int i=0; i<jobDescList.size(); i++)
 					js.setData(i, jobDescList.get(i));
 			}
 
+			else
+			{
+				JobDesc.Builder jdesc = JobDesc.newBuilder();
+				jdesc.setNameSpace(jobOp.getBody().getJobOp().getData().getNameSpace());
+				jdesc.setOwnerId((jobOp.getBody().getJobOp().getData().getOwnerId()));
+				jdesc.setJobId((jobOp.getBody().getJobOp().getData().getJobId()));
+				jdesc.setStatus(JobCode.JOBRECEIVED);
+				js.setData(0, jdesc);
+			}
 			// payload containing data for job
 			Request.Builder r = Request.newBuilder();
 			eye.Comm.Payload.Builder p = Payload.newBuilder();
