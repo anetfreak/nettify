@@ -585,8 +585,7 @@ public class PerChannelQueue implements ChannelQueue {
 
 				// if the List returned is not null ,then associate it with the
 				// JobStatus
-				if(jobDescList != null)
-				{
+				if (jobDescList != null) {
 					if (!jobDescList.isEmpty()) {
 						logger.info("List of Job Desc retireved from DB is not Empty.. !!");
 						for (int i = 0; i < jobDescList.size(); i++)
@@ -594,7 +593,7 @@ public class PerChannelQueue implements ChannelQueue {
 					}
 				}
 
-				else {
+				/*else {
 					JobDesc.Builder jdesc = JobDesc.newBuilder();
 					jdesc.setNameSpace(jobOp.getBody().getJobOp().getData()
 							.getNameSpace());
@@ -604,7 +603,7 @@ public class PerChannelQueue implements ChannelQueue {
 							.getJobId()));
 					jdesc.setStatus(JobCode.JOBRECEIVED);
 					js.setData(0, jdesc);
-				}
+				}*/
 				// payload containing data for job
 				Request.Builder r = Request.newBuilder();
 				eye.Comm.Payload.Builder p = Payload.newBuilder();
