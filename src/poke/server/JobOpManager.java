@@ -110,7 +110,7 @@ public class JobOpManager {
 	public synchronized boolean submitJobOperation(PerChannelQueue sq, Request jOpReq) {
 		logger.info("Job Operation recieved, store and send to channel");
 		if(isLeader())
-			map_JobOperation.put(jOpReq.getBody().getJobOp().getJobId(), new PCQandJob(sq,jOpReq));
+			map_JobOperation.put(jOpReq.getBody().getJobOp().getData().getJobId(), new PCQandJob(sq,jOpReq));
 		//forwarding to next node, nothing will be handled here, just an interface to forward to next node
 		sendResponse(jOpReq);
 		return true;
