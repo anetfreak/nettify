@@ -384,8 +384,11 @@ public class PerChannelQueue implements ChannelQueue {
 												// create job status request
 												Request status = createJobStatus(req, b, null);
 
+												logger.info("Creating status request for Job Operation.. ");
 												// send the Job Status request back to the client
 												JobOpManager.getInstance().submitJobStatus(status);
+												logger.info("Forwarding the Status Request");
+												
 											} catch (Exception e) {
 												logger.info("Exception encountered in persisiting to the DB : "
 														+ e);
@@ -569,6 +572,8 @@ public class PerChannelQueue implements ChannelQueue {
 			logger.info("New Job reply status request formed.. Sending it back to the client");
 			return req;
 		}
+		
+		
 		public Request createJobOperation(JobBid bidReq) {
 
 			int recNode = (int) (bidReq.getOwnerId());

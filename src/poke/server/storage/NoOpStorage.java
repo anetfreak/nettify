@@ -42,7 +42,7 @@ public class NoOpStorage implements Storage {
 	}
 
 	@Override
-	public List<JobDesc> findJobs(String namespace, JobDesc criteria) {
+	public List<JobDesc.Builder> findJobs(String namespace, JobDesc criteria) {
 		// TODO Auto-generated method stub
 		return null;
 	}
