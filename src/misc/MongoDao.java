@@ -111,9 +111,9 @@ public class MongoDao {
 	 * If the job action is 4, then List all the jobs present in the DB with that Job ID
 	 */
 	
-	public List<JobDesc.Builder> findJobs(String namespace, JobDesc criteria){
+	public List<JobDesc> findJobs(String namespace, JobDesc criteria){
 		
-		List<JobDesc.Builder> listJobs = null;
+		List<JobDesc> listJobs = null;
 		
 		DBCollection collection = getJobsCollection();
 		
@@ -156,7 +156,7 @@ public class MongoDao {
 			jobs.setOptions(nameval);
 			
 			//adding to the JobDesc list
-			listJobs.add(jobs);
+			listJobs.add(jobs.build());
 		}
 		 
 		return listJobs;
