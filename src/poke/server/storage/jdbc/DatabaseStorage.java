@@ -224,8 +224,8 @@ public class DatabaseStorage implements Storage {
 	 * If the job action is 4 - List Jobs, then list all the jobs associated with that Job ID from the DB
 	 */
 	@Override
-	public List<JobDesc> findJobs(String namespace, JobDesc criteria) {
-		List<JobDesc> listJobs = mongodb.findJobs(namespace, criteria);
+	public List<JobDesc.Builder> findJobs(String namespace, JobDesc criteria) {
+		List<JobDesc.Builder> listJobs = mongodb.findJobs(namespace, criteria);
 			return listJobs;
 	}
 }

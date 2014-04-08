@@ -1,6 +1,7 @@
 package misc;
 
 import java.net.UnknownHostException;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +13,9 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoException;
 
 import eye.Comm.JobDesc;
+import eye.Comm.JobDesc.JobCode;
+import eye.Comm.NameValueSet;
+import eye.Comm.NameValueSet.NodeType;
 
 public class MongoDao {
 
@@ -99,10 +103,17 @@ public class MongoDao {
 			return false;
 	}
 	
-	public List<JobDesc> findJobs(String namespace, JobDesc criteria){
+	/**
+	 * @author chitra
+	 * @param namespace
+	 * @param criteria
+	 * @return
+	 * If the job action is 4, then List all the jobs present in the DB with that Job ID
+	 */
+	
+	public List<JobDesc.Builder> findJobs(String namespace, JobDesc criteria){
 		
-		List<JobDesc> listJobs = null;
-		JobDesc.Builder job = JobDesc.newBuilder();
+		List<JobDesc.Builder> listJobs = null;
 		
 		DBCollection collection = getJobsCollection();
 		
@@ -115,19 +126,37 @@ public class MongoDao {
 		System.out.println(findQuery.toString());
 		
 		DBCursor cursor = collection.find(findQuery);
+		String nmspace;
+		long ownerId;
+		String Jobid;
+		JobCode status;
+		NodeType nodetype;
+		NameValueSet.Builder nameval = NameValueSet.newBuilder();
+		String name;
+		String value;
 		
 		while(cursor.hasNext())
 		{
-			/*
-			job.setNameSpace(collection.);
-			doc.put("NameSpace", namespace);
-			doc.put("Owner ID", job.getOwnerId());
-			doc.put("Job ID", job.getJobId());
-			doc.put("Job Status Code", job.getStatus().name());
-			doc.put("Node Type", job.getOptions().getNodeType().getNumber());
-			doc.put("Name", job.getOptions().getName());
-			doc.put("Value", job.getOptions().getValue());
-			*/
+			JobDesc.Builder jobs = JobDesc.newBuilder();
+			nmspace = cursor.curr().get("NameSpace").toString();
+			ownerId = (long)(cursor.curr().get("Owner ID"));
+			Jobid = cursor.curr().get("Job ID").toString();
+			status = (JobCode)cursor.curr().get("Job Status Code");
+			nodetype = (NodeType)cursor.curr().get("Node Type");
+			name = cursor.curr().get("Name").toString();
+			value = cursor.curr().get("Value").toString();
+			
+			jobs.setNameSpace(nmspace);
+			jobs.setOwnerId(ownerId);
+			jobs.setJobId(Jobid);
+			jobs.setStatus(status);
+			nameval.setName(name);
+			nameval.setValue(value);
+			nameval.setNodeType(nodetype);
+			jobs.setOptions(nameval);
+			
+			//adding to the JobDesc list
+			listJobs.add(jobs);
 		}
 		 
 		return listJobs;

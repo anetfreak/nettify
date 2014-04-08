@@ -391,7 +391,7 @@ public class PerChannelQueue implements ChannelQueue {
 														+ e);
 											}
 										}
-										//if I get a job operation with REMOVE JOB code, then add to DB
+										//if I get a job operation with REMOVE JOB code, then readdmove then job from the DB
 										else if(req.getBody().getJobOp().getAction().getNumber() == 3)
 										{
 											try 
@@ -418,7 +418,7 @@ public class PerChannelQueue implements ChannelQueue {
 											try
 											{
 												Boolean b = false;
-												List<JobDesc> listJobs = storage.findJobs(req.getBody().getJobOp().getData().getNameSpace(), req.getBody().getJobOp().getData());
+												List<JobDesc.Builder> listJobs = storage.findJobs(req.getBody().getJobOp().getData().getNameSpace(), req.getBody().getJobOp().getData());
 												if (!listJobs.isEmpty())
 												{
 													 b = true;
@@ -531,7 +531,7 @@ public class PerChannelQueue implements ChannelQueue {
 		 * @param jobOp
 		 * @return
 		 */
-		public Request createJobStatus(Request jobOp, boolean b, List<JobDesc> jobDescList)
+		public Request createJobStatus(Request jobOp, boolean b, List<JobDesc.Builder> jobDescList)
 		{
 			JobStatus.Builder js = JobStatus.newBuilder();
 			js.setJobId(jobOp.getBody().getJobOp().getJobId());

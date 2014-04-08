@@ -2,11 +2,5 @@
 /.metadata
 /.settings
 *.prefs
-
 *.class
-
-*.class
-
-python/src/CommHandler$py.class
-
-python/src/CommConnection$py.class
+*.pyc
