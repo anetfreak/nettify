@@ -87,13 +87,13 @@ public class InMemoryStorage implements Storage {
 	}
 
 	@Override
-	public List<JobDesc> findJobs(String namespace, JobDesc criteria) {
+	public List<JobDesc.Builder> findJobs(String namespace, JobDesc criteria) {
 		DataNameSpace dns = spaces.get(namespace);
 		if (dns == null)
 			return null;
 		else {
 			// TODO return the jobs matching a query is not implemented
-			return new ArrayList<JobDesc>(dns.jobs.values());
+			return new ArrayList<JobDesc.Builder>(dns.jobs.values());
 		}
 	}
 

@@ -180,7 +180,7 @@ public class ServerConnection {
 				conn.checkandChangeConn();
 				ch = conn.connect();
 				if (ch == null || !ch.isOpen()) {
-					//ServerConnection.logger.error("connection missing, no outbound communication");
+					ServerConnection.logger.error("connection missing, no outbound communication");
 					try {
 						Thread.sleep(500);
 					} catch (InterruptedException e) {
