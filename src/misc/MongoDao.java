@@ -39,6 +39,25 @@ public class MongoDao {
 		return collection;
 	}
 
+	public DBCollection getCoursesCollection()
+	{
+		//Connect to Mongo DB..
+		MongoClient mongo;
+		DBCollection collection = null;
+		try {
+			mongo = new MongoClient("localhost", 27017);
+			//Create DB..
+			DB mongodb = mongo.getDB("nettify");
+			collection = mongodb.getCollection("courses");
+		} catch (UnknownHostException e) {
+			System.out.println("Exception in Connection to Mongo "+e);
+		}
+		catch(MongoException me) {
+			me.printStackTrace();
+		}
+		return collection;
+	}
+	
 	/**
 	 * @author Chitra
 	 * @param namespace
@@ -112,7 +131,7 @@ public class MongoDao {
 		
 		List<String> coursesName = null;
 		
-		DBCollection collection = getJobsCollection();
+		DBCollection collection = getCoursesCollection();
 		BasicDBObject findQuery = new BasicDBObject();
 		DBCursor cursor = collection.find(findQuery);
 		while(cursor.hasNext()) {
