@@ -41,5 +41,5 @@ public interface Storage {
 
 	boolean updateJob(String namespace, JobDesc doc);
 
-	List<JobDesc.Builder> findJobs(String namespace, JobDesc criteria);
+	List<JobDesc> findJobs(String namespace, JobDesc criteria);
 }
