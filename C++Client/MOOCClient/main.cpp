@@ -198,6 +198,8 @@ public:
         if(error)
         {
             cout<<"Header Read fialed";
+            flush(cout);
+            sleep(1);
         }
         else
         {
