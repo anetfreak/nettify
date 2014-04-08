@@ -87,23 +87,16 @@ public class PerChannelQueue implements ChannelQueue {
 		init();
 	}
 
-	public Integer NodeIdToInt(String nodeId)
-	{
+	public Integer NodeIdToInt(String nodeId) {
 		Integer i_id = 0;
-		if(nodeId.equals("zero") ){
-			i_id = 0; 
-		}
-		else if(nodeId.equals("one"))
-		{
-			i_id = 1; 
-		}
-		else if(nodeId.equals("two"))
-		{
-			i_id = 2; 
-		}
-		else if (nodeId.equals("three"))
-		{
-			i_id =3; 
+		if (nodeId.equals("zero")) {
+			i_id = 0;
+		} else if (nodeId.equals("one")) {
+			i_id = 1;
+		} else if (nodeId.equals("two")) {
+			i_id = 2;
+		} else if (nodeId.equals("three")) {
+			i_id = 3;
 		}
 		return i_id;
 	}
@@ -233,12 +226,11 @@ public class PerChannelQueue implements ChannelQueue {
 
 			if (conn == null || !conn.isOpen()) {
 				PerChannelQueue.logger
-				.error("connection missing, no outbound communication");
+						.error("connection missing, no outbound communication");
 				return;
 			}
 			logger.info("PerChannel OutBoundWorker started...."
 					+ conn.toString() + conn.pipeline().toString());
-
 
 			while (true) {
 				if (!forever && sq.outbound.size() == 0)
@@ -248,7 +240,7 @@ public class PerChannelQueue implements ChannelQueue {
 					// block until a message is enqueued
 					GeneratedMessage msg = sq.outbound.take();
 					System.out
-					.println("Got a message at server outbound queue");
+							.println("Got a message at server outbound queue");
 					if (conn.isWritable()) {
 						boolean rtn = false;
 						if (channel != null && channel.isOpen()
@@ -304,23 +296,24 @@ public class PerChannelQueue implements ChannelQueue {
 				throw new RuntimeException(
 						"connection worker detected null queue");
 		}
-		public boolean isLeader()
-		{
-			return ElectionManager.getInstance().getLeader().equals(getMyNode());
+
+		public boolean isLeader() {
+			return ElectionManager.getInstance().getLeader()
+					.equals(getMyNode());
 		}
-		public String getMyNode()
-		{
-			return ResourceFactory.getInstance().getCfg()
-					.getServer().getProperty("node.id");
+
+		public String getMyNode() {
+			return ResourceFactory.getInstance().getCfg().getServer()
+					.getProperty("node.id");
 		}
+
 		@Override
-		public void run() 
-		{
+		public void run() {
 			Channel conn = sq.channel;
 			logger.info("PerChannel InbondWorker started");
 			if (conn == null || !conn.isOpen()) {
 				PerChannelQueue.logger
-				.error("connection missing, no inbound communication");
+						.error("connection missing, no inbound communication");
 				return;
 			}
 
@@ -345,11 +338,10 @@ public class PerChannelQueue implements ChannelQueue {
 						}
 						// if the request is for serving a job - pass the
 						// request to job manager as jobProposal
-						if (req.getHeader().getRoutingId().getNumber() == Routing.JOBS.getNumber()) 
-						{
-							//if the request is for JobOperation, process it
-							if (req.getBody().hasJobOp()) 
-							{
+						if (req.getHeader().getRoutingId().getNumber() == Routing.JOBS
+								.getNumber()) {
+							// if the request is for JobOperation, process it
+							if (req.getBody().hasJobOp()) {
 								if (isLeader()) {
 									logger.info("Received a JobOp request .. I am the leader.. Forwarding the request");
 									reqOperation = req;
@@ -358,24 +350,29 @@ public class PerChannelQueue implements ChannelQueue {
 									addJobToQueue(mgmt);
 									JobBid bidReq = waitForBid();
 									Request result = createJobOperation(bidReq);
-									JobOpManager.getInstance().submitJobOperation(sq, result);
-								} 
-								else 
-								{
+									JobOpManager.getInstance()
+											.submitJobOperation(sq, result);
+								} else {
 									logger.info("Received a JobOperation request . Checking if the request is for me.");
 									// Check if I have to handle the request
-									if (req.getHeader().getToNode().equals(getMyNode())) 
-									{
+									if (req.getHeader().getToNode()
+											.equals(getMyNode())) {
 										logger.info("My bidding was highest.. This JobOp request is for me.. Processing it..");
-										//if I get a job operation with ADD JOB code, then add to DB
-										if(req.getBody().getJobOp().getAction().getNumber() == 1)
-										{
-											try 
-											{
-												// access the database, do the operation
-												// sending the job desc object to the DB
-												Boolean b = storage
-														.addJob(req.getBody().getJobOp().getData().getNameSpace(), req.getBody().getJobOp().getData());
+										// if I get a job operation with ADD JOB
+										// code, then add to DB
+										if (req.getBody().getJobOp()
+												.getAction().getNumber() == 1) {
+											try {
+												// access the database, do the
+												// operation
+												// sending the job desc object
+												// to the DB
+												Boolean b = storage.addJob(req
+														.getBody().getJobOp()
+														.getData()
+														.getNameSpace(), req
+														.getBody().getJobOp()
+														.getData());
 												if (b)
 													logger.info("Job desc added to the DB..");
 												else
@@ -383,95 +380,133 @@ public class PerChannelQueue implements ChannelQueue {
 
 												logger.info("Job persisted.. Creating status response for client");
 												// create job status request
-												Request status = createJobStatus(req, b, null);
+												Request status = createJobStatus(
+														req, b, null);
 
 												logger.info("Created status request for Job Operation.. ");
-												// send the Job Status request back to the client
-												JobOpManager.getInstance().submitJobStatus(status);
+												// send the Job Status request
+												// back to the client
+												JobOpManager
+														.getInstance()
+														.submitJobStatus(status);
 												logger.info("Forwarding the Status Request");
-												
+
 											} catch (Exception e) {
-												logger.info("Exception encountered in persisiting to the DB : "+ e);
+												logger.info("Exception encountered in persisiting to the DB : "
+														+ e);
 											}
 										}
-										//if I get a job operation with REMOVE JOB code, then readdmove then job from the DB
-										else if(req.getBody().getJobOp().getAction().getNumber() == 3)
-										{
-											try 
-											{
-												Boolean b = storage.removeJob(req.getBody().getJobOp().getData().getNameSpace(), req.getBody().getJobOp().getJobId());
+										// if I get a job operation with REMOVE
+										// JOB code, then readdmove then job
+										// from the DB
+										else if (req.getBody().getJobOp()
+												.getAction().getNumber() == 3) {
+											try {
+												Boolean b = storage
+														.removeJob(
+																req.getBody()
+																		.getJobOp()
+																		.getData()
+																		.getNameSpace(),
+																req.getBody()
+																		.getJobOp()
+																		.getJobId());
 												if (b)
 													logger.info("Job desc removed from the DB..");
 												else
 													logger.info("Could not remove job desc from the DB");
 
 												// create job status request
-												Request status = createJobStatus(req, b, null);
+												Request status = createJobStatus(
+														req, b, null);
 
-												// send the Job Status request back to the client
-												JobOpManager.getInstance().submitJobStatus(status);
+												// send the Job Status request
+												// back to the client
+												JobOpManager
+														.getInstance()
+														.submitJobStatus(status);
 											} catch (Exception e) {
 												logger.info("Exception encountered in removing entries from the DB : "
 														+ e);
 											}
 										}
-										//if the job operation request if for finding the jobs 
-										else if (req.getBody().getJobOp().getAction().getNumber() == 4)
-										{
-											try
-											{
+										// if the job operation request if for
+										// finding the jobs
+										else if (req.getBody().getJobOp()
+												.getAction().getNumber() == 4) {
+											try {
 												Boolean b = false;
-												List<JobDesc> listJobs = storage.findJobs(req.getBody().getJobOp().getData().getNameSpace(), req.getBody().getJobOp().getData());
-												if (!listJobs.isEmpty())
-												{
-													 b = true;
-													logger.info("Fetched job lists from the DB for JObID : "+req.getBody().getJobOp().getJobId());
-												}
-												else
-													logger.info("No Jobs found with the JobID : "+req.getBody().getJobOp().getJobId());
+												List<JobDesc> listJobs = storage
+														.findJobs(
+																req.getBody()
+																		.getJobOp()
+																		.getData()
+																		.getNameSpace(),
+																req.getBody()
+																		.getJobOp()
+																		.getData());
+												if (!listJobs.isEmpty()) {
+													b = true;
+													logger.info("Fetched job lists from the DB for JObID : "
+															+ req.getBody()
+																	.getJobOp()
+																	.getJobId());
+												} else
+													logger.info("No Jobs found with the JobID : "
+															+ req.getBody()
+																	.getJobOp()
+																	.getJobId());
 
 												// create job status request
-												Request status = createJobStatus(req, b, listJobs);
-												
-												// send the Job Status request back to the client
-												JobOpManager.getInstance().submitJobStatus(status);
-											}
-											catch(Exception e)
-											{
-												logger.info("Exception encountered in finding data from the DB : "+ e);
+												Request status = createJobStatus(
+														req, b, listJobs);
+
+												// send the Job Status request
+												// back to the client
+												JobOpManager
+														.getInstance()
+														.submitJobStatus(status);
+											} catch (Exception e) {
+												logger.info("Exception encountered in finding data from the DB : "
+														+ e);
 											}
 										}
-									}
-									else {
+									} else {
 										logger.info("I do not have to serve this JobOp request. Forwarding it..");
-										// Forward the Job for other node tohandle
-										JobOpManager.getInstance().sendResponse(req);
+										// Forward the Job for other node
+										// tohandle
+										JobOpManager.getInstance()
+												.sendResponse(req);
 									}
 								}
-							} 
-							//if the request has a JobStatus, the request has been processed, it needs to be sent back to the client
+							}
+							// if the request has a JobStatus, the request has
+							// been processed, it needs to be sent back to the
+							// client
 							else if (req.getBody().hasJobStatus()) {
 								if (isLeader()) {
 									logger.info("Received a JobStatus request.. I am the leader.. Sending it to the client");
 									// add to outbound queue, write to client
-									JobOpManager.getInstance().submitJobStatus(req);
+									JobOpManager.getInstance().submitJobStatus(
+											req);
 								} else {
 									logger.info("Received a JobStatus request.. Forwarding it till it reaches the leader..");
 									// send to next node
-									JobOpManager.getInstance().submitJobStatus(req);
+									JobOpManager.getInstance().submitJobStatus(
+											req);
 
 								}
-							} 
-//							else {
-//								// handle it locally
-//								logger.info("Processing ping requests here..");
-//								logger.info("Request received - ", req);
-//								logger.info("Reply to be sent - ", reply);
-//								reply = rsc.process(req);
-//								sq.enqueueResponse(reply, null);
-//							}
+							}
+							// else {
+							// // handle it locally
+							// logger.info("Processing ping requests here..");
+							// logger.info("Request received - ", req);
+							// logger.info("Reply to be sent - ", reply);
+							// reply = rsc.process(req);
+							// sq.enqueueResponse(reply, null);
+							// }
 						}
-						
+
 						else {
 							// handle it locally
 							logger.info("Processing ping requests here..");
@@ -480,15 +515,15 @@ public class PerChannelQueue implements ChannelQueue {
 							logger.info("Reply to be sent - ", reply.toString());
 							sq.enqueueResponse(reply, null);
 						}
-						
-						
-					} }catch (InterruptedException ie) {
-						break;
-					} catch (Exception e) {
-						PerChannelQueue.logger.error(
-								"Unexpected processing failure", e);
-						break;
+
 					}
+				} catch (InterruptedException ie) {
+					break;
+				} catch (Exception e) {
+					PerChannelQueue.logger.error(
+							"Unexpected processing failure", e);
+					break;
+				}
 			}
 
 			if (!forever) {
@@ -497,14 +532,12 @@ public class PerChannelQueue implements ChannelQueue {
 		}
 
 		// method to place a request of job processing on Job Manager
-		public void addJobToQueue(Management jobReq) 
-		{
+		public void addJobToQueue(Management jobReq) {
 			logger.info("Job Bid at PCQ added to queue");
 			JobManager.getInstance().submitJobProposal(sq, jobReq);
 		}
 
-		public JobBid waitForBid() 
-		{
+		public JobBid waitForBid() {
 			while (bidResponse.isEmpty()) {
 				try {
 					this.sleep(200);
@@ -518,74 +551,85 @@ public class PerChannelQueue implements ChannelQueue {
 		}
 
 		/**
-		 * If the request has been processed by the cluster/any client : forward the Job Status request
+		 * If the request has been processed by the cluster/any client : forward
+		 * the Job Status request
+		 * 
 		 * @param jobstatusreq
 		 * @return
 		 */
-		public void submitJobStatus(Request jobstatusreq)
-		{
+		public void submitJobStatus(Request jobstatusreq) {
 			logger.info("Pushing the request to the client channel..! In submitJobStatus()");
 			sq.enqueueResponse(jobstatusreq, null);
 		}
 
-
 		/**
-		 * If the Job has been processed by the cluster : create a Job Status request
+		 * If the Job has been processed by the cluster : create a Job Status
+		 * request
+		 * 
 		 * @param jobOp
 		 * @return
 		 */
-		public Request createJobStatus(Request jobOp, boolean b, List<JobDesc> jobDescList)
-		{
-			logger.info("Request is: \n",jobOp.toString());
-			logger.info("Inside createJobStatus() ..");
-			JobStatus.Builder js = JobStatus.newBuilder();
-			js.setJobId(jobOp.getBody().getJobOp().getJobId());
-			if(b)
-				js.setStatus(PokeStatus.SUCCESS);
-			else
-				js.setStatus(PokeStatus.FAILURE);
+		public Request createJobStatus(Request jobOp, boolean b,
+				List<JobDesc> jobDescList) {
+			try {
+				logger.info("Request is: \n", jobOp.toString());
+				logger.info("Inside createJobStatus() ..");
+				JobStatus.Builder js = JobStatus.newBuilder();
+				js.setJobId(jobOp.getBody().getJobOp().getJobId());
+				if (b)
+					js.setStatus(PokeStatus.SUCCESS);
+				else
+					js.setStatus(PokeStatus.FAILURE);
 
-			js.setJobState(JobCode.JOBRECEIVED);
-			
-			//if the List returned is not null ,then associate it with the JobStatus
-			if(!jobDescList.isEmpty())
-			{
-				logger.info("List of Job Desc retireved from DB is not null.. !!");
-				for(int i=0; i<jobDescList.size(); i++)
-					js.setData(i, jobDescList.get(i));
+				js.setJobState(JobCode.JOBRECEIVED);
+
+				// if the List returned is not null ,then associate it with the
+				// JobStatus
+				if(jobDescList != null)
+				{
+					if (!jobDescList.isEmpty()) {
+						logger.info("List of Job Desc retireved from DB is not Empty.. !!");
+						for (int i = 0; i < jobDescList.size(); i++)
+							js.setData(i, jobDescList.get(i));
+					}
+				}
+
+				else {
+					JobDesc.Builder jdesc = JobDesc.newBuilder();
+					jdesc.setNameSpace(jobOp.getBody().getJobOp().getData()
+							.getNameSpace());
+					jdesc.setOwnerId((jobOp.getBody().getJobOp().getData()
+							.getOwnerId()));
+					jdesc.setJobId((jobOp.getBody().getJobOp().getData()
+							.getJobId()));
+					jdesc.setStatus(JobCode.JOBRECEIVED);
+					js.setData(0, jdesc);
+				}
+				// payload containing data for job
+				Request.Builder r = Request.newBuilder();
+				eye.Comm.Payload.Builder p = Payload.newBuilder();
+				p.setJobStatus(js.build());
+				r.setBody(p.build());
+
+				// header with routing info
+				Header.Builder h = Header.newBuilder();
+				h.setOriginator(getMyNode());
+				h.setTag(jobOp.getHeader().getTag());
+				h.setTime(jobOp.getHeader().getTime());
+				h.setRoutingId(jobOp.getHeader().getRoutingId());
+				h.setToNode("client");
+
+				r.setHeader(h.build());
+				Request req = r.build();
+				logger.info("New Job reply status request formed.. Sending it back to the client");
+				return req;
+			} catch (NullPointerException npe) {
+				npe.printStackTrace();
 			}
+			return null;
 
-			else
-			{
-				JobDesc.Builder jdesc = JobDesc.newBuilder();
-				jdesc.setNameSpace(jobOp.getBody().getJobOp().getData().getNameSpace());
-				jdesc.setOwnerId((jobOp.getBody().getJobOp().getData().getOwnerId()));
-				jdesc.setJobId((jobOp.getBody().getJobOp().getData().getJobId()));
-				jdesc.setStatus(JobCode.JOBRECEIVED);
-				js.setData(0, jdesc);
-			}
-			// payload containing data for job
-			Request.Builder r = Request.newBuilder();
-			eye.Comm.Payload.Builder p = Payload.newBuilder();
-			p.setJobStatus(js.build());
-			r.setBody(p.build());
-
-			// header with routing info
-			Header.Builder h = Header.newBuilder();
-			h.setOriginator(getMyNode());
-			h.setTag(jobOp.getHeader().getTag());
-			h.setTime(jobOp.getHeader().getTime());
-			h.setRoutingId(jobOp.getHeader().getRoutingId());
-			h.setToNode("client");
-
-			r.setHeader(h.build());
-			Request req = r.build();
-
-			logger.info("New Job reply status request formed.. Sending it back to the client");
-			return req;
 		}
-		
-		
+
 		public Request createJobOperation(JobBid bidReq) {
 
 			int recNode = (int) (bidReq.getOwnerId());
@@ -659,8 +703,7 @@ public class PerChannelQueue implements ChannelQueue {
 		@Override
 		public void operationComplete(ChannelFuture future) throws Exception {
 			logger.info("Write complete");
-			if(future.isSuccess() !=true)
-			{
+			if (future.isSuccess() != true) {
 				logger.info("isSuccess: " + future.isSuccess());
 				logger.info("Cause: " + future.cause());
 			}
