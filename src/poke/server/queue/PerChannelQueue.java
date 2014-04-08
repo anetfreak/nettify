@@ -391,7 +391,7 @@ public class PerChannelQueue implements ChannelQueue {
 														+ e);
 											}
 										}
-										//if I get a job operation with REMOVE JOB code, then add to DB
+										//if I get a job operation with REMOVE JOB code, then readdmove then job from the DB
 										else if(req.getBody().getJobOp().getAction().getNumber() == 3)
 										{
 											try 
