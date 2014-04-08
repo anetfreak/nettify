@@ -575,7 +575,7 @@ public class PerChannelQueue implements ChannelQueue {
 				logger.info("Request is: \n", jobOp.toString());
 				logger.info("Inside createJobStatus() ..");
 				JobStatus.Builder js = JobStatus.newBuilder();
-				js.setJobId(jobOp.getBody().getJobOp().getJobId());
+				js.setJobId(jobOp.getBody().getJobOp().getData().getJobId());
 				if (b)
 					js.setStatus(PokeStatus.SUCCESS);
 				else
