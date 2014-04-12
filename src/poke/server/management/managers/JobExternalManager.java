@@ -32,7 +32,7 @@ public class JobExternalManager {
 	protected static Logger logger = LoggerFactory.getLogger("JobExternalManager");
 	protected static AtomicReference<JobExternalManager> instance = new AtomicReference<JobExternalManager>();
 	JobBidWorker jbworkerThread = null;
-
+	JobConnector jobConn = null;
 	private class PCQandJob
 	{
 		private PerChannelQueue pcq;
@@ -115,10 +115,17 @@ public class JobExternalManager {
 	}
 	protected void init()
 	{
+		jobConn = new JobConnector();
 		//if(isLeader())
 			//(new JobBidWorker(this)).start();
 	}
-
+	public boolean isOwner(String o_id)
+	{
+		if(nodeId.equalsIgnoreCase(o_id))
+			return true;
+		return false;
+	}
+	
 	public boolean isLeader()
 	{
 		if(nodeId.equals(ElectionManager.getLeader()))
@@ -132,7 +139,7 @@ public class JobExternalManager {
 	 */
 	public synchronized boolean submitJobProposal(PerChannelQueue sq, Management jbreq) {
 		//get jobId and store
-		logger.info("Chitra ka Job Proposal recieved, sending to channel");
+		logger.info("Job Proposal recieved, sending to outside channel");
 		queue_JobProposal.put(jbreq.getJobPropose().getJobId(), new PCQandJob(sq,jbreq));
 		sendResponse(jbreq);
 		return true;
@@ -145,18 +152,12 @@ public class JobExternalManager {
 	 */
 	public void sendResponse(Management mreq)
 	{
-		for (HeartbeatData hd : HeartbeatManager.getInstance()
-				.getOutgoingQueue_test().values()) {
-			logger.info("JobProposal Request beat (" + nodeId + ") sent to "
-					+ hd.getNodeId() + " at " + hd.getHost()
-					+ hd.channel.remoteAddress());
-			try {
-				if (hd.channel.isWritable()) {
-					hd.channel.writeAndFlush(mreq);
-				}
-			} catch (Exception e) {
-				logger.error("Failed  to send  for " + hd.getNodeId() + " at " + hd.getHost(), e);
-			}
+		logger.info("Sending Job Proposal to external server");
+		try {
+			jobConn.sendMessage(mreq);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
@@ -167,25 +168,25 @@ public class JobExternalManager {
 	 *            The proposal
 	 */
 	public void processRequest(JobProposal req) {
-		if(isLeader())
+		if(isLeader() /*&& isOwner()*/)
 		{
-			//do nothing
-			return;
-		}
-		logger.info("Received a Job Proposal");
-		if (req == null) {
-			logger.info("No Job Proposal request received..!");
-			return;
-		} else {
-			logger.info("Owner of the Job Proposal : " + req.getOwnerId());
-			logger.info("Job ID Received : " + req.getJobId());
-			logger.info("I start to bid for the job..!");
-			//startJobBidding(nodeId, req.getOwnerId(), req.getJobId());
-			startJobBidding(req);
-			//forward proposal request too
-			Management.Builder b = Management.newBuilder();
-			b.setJobPropose(req);
-			sendResponse(b.build());
+			//TODO if(req.getOwnerId()) then do nothing
+			logger.info("Received a Job Proposal from external server");
+			if (req == null) {
+				logger.info("No Job Proposal request received..!");
+				return;
+			} 
+			else {
+				logger.info("Owner of the Job Proposal : " + req.getOwnerId());
+				logger.info("Job ID Received : " + req.getJobId());
+				logger.info("I start to bid for the job..!");
+				//startJobBidding(nodeId, req.getOwnerId(), req.getJobId());
+				startJobBidding(req);
+				//forward proposal request too
+				Management.Builder b = Management.newBuilder();
+				b.setJobPropose(req);
+				sendResponse(b.build());
+			}
 		}
 	}
 
@@ -207,6 +208,7 @@ public class JobExternalManager {
 
 		if(isLeader())
 		{
+			//TODO if owner then add to queue else forward
 			if(jbworkerThread == null)
 			{
 				jbworkerThread = new JobBidWorker(this);
@@ -230,13 +232,6 @@ public class JobExternalManager {
 	 * Custom method for bidding for the proposed job
 	 */
 	public void startJobBidding(JobProposal jpReq) {
-		
-		for (HeartbeatData hd : HeartbeatManager.getInstance()
-				.getOutgoingQueue_test().values()) {
-			logger.info("Job proposal request on (" + nodeId + ") sent to "
-					+ hd.getNodeId() + " at " + hd.getHost()
-					+ hd.channel.remoteAddress());
-
 			try {
 				// sending job proposal request for bidding
 				JobBid.Builder jb = JobBid.newBuilder();
@@ -255,18 +250,14 @@ public class JobExternalManager {
 
 				Management.Builder b = Management.newBuilder();
 				b.setJobBid(jb);
-				if (hd.channel.isWritable()) {
-					hd.channel.writeAndFlush(b.build());
-				}
+					sendResponse(b.build());
 
 			} catch (Exception e) {
-				logger.error(
-						"Failed  to send bidding request for " + hd.getNodeId()
-						+ " at " + hd.getHost(), e);
+				logger.error("Failed  to send bidding request to external servers");
 			}
 
 		}
-	}
+	
 
 	/**
 	 * Class for receiving all the bids from all the nodes in the cluster.

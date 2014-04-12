@@ -8,21 +8,21 @@ import io.netty.channel.SimpleChannelInboundHandler;
  * @author Amit
  */
 
-public class JobConnHandler extends SimpleChannelInboundHandler<eye.Comm.Request>{
+public class JobConnHandler extends SimpleChannelInboundHandler<eye.Comm.Management>{
 	JobConnector jobConnector = null;
 	public JobConnHandler(JobConnector jc)
 	{
 		this.jobConnector = jc;
 	}
 	@Override
-	protected void channelRead0(ChannelHandlerContext ctx, eye.Comm.Request msg) throws Exception {
+	protected void channelRead0(ChannelHandlerContext ctx, eye.Comm.Management msg) throws Exception {
 		//System.out.println("ctx.channel().pipeline().toString()");
 		//As per current design there will no message here
 		onMessage(msg);
 	}
 	
 
-	private void onMessage(eye.Comm.Request msg)
+	private void onMessage(eye.Comm.Management msg)
 	{
 		if(jobConnector != null)
 		{

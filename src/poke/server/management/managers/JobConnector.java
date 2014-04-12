@@ -36,6 +36,7 @@ import poke.server.resources.ResourceFactory;
 
 import com.google.protobuf.GeneratedMessage;
 
+import eye.Comm.Management;
 import eye.Comm.Request;
 
 public class JobConnector {
@@ -143,9 +144,9 @@ public class JobConnector {
 		// group.shutdownGracefully();
 	}
 
-	public void sendMessage(Request req) throws Exception {
+	public void sendMessage(Management req) throws Exception {
 		// enqueue message
-		logger.info("Received the JobOperation in ServerConnection");
+		logger.info("Received a Management request to External server");
 		outbound.put(req);
 	}
 
@@ -242,8 +243,13 @@ public class JobConnector {
 		}
 	}
 
-	public boolean handleIncomingRequest(Request msg) {
-		// TODO send the request to JobManager for handling
+	public boolean handleIncomingRequest(Management msg) {
+		if(msg.hasJobPropose())
+			JobExternalManager.getInstance().processRequest(msg.getJobPropose());
+		else if(msg.hasJobBid())
+			JobExternalManager.getInstance().processRequest(msg.getJobBid());
+		else
+			logger.info("Not a Job Proposal or Job Bid, discarding...");
 		return true;
 	}
 
