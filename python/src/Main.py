@@ -58,6 +58,7 @@ if __name__ == '__main__':
           port = int(input("Enter port: "))
           namespace = str(input("Enter Namespace: "))
 #           PyClient().chooseOperation(requestType, host, port)
+          PyClient().sendMockJobProposal(namespace, host, port)
 
       elif choice == 7:
           print "Bye!"

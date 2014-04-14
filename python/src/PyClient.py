@@ -43,6 +43,7 @@ class PyClient():
       request = self.formJobProposal(ns)
       print "Preparing to send mock job proposal to server <" + str(host) + ":" + str(port) +">"
       response = self.run(host, port, request)
+      print "Received response"
 #       self.printPingRequest(response)
   
   def formPingRequest(self):
@@ -105,7 +106,7 @@ class PyClient():
       print "Job Id - " + str(resp.body.job_status.job_id)
       print "Status of job request - " + str(resp.body.job_status.status)
       print "State of the job  - " + str(resp.body.job_status.job_state)
-      data = resp.body.job_status.data
+      data = resp.body.job_status.data.options
       for course in data:
         print course.value
                       
