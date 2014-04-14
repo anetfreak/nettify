@@ -184,7 +184,7 @@ public class MongoDao {
 		{
 			JobDesc.Builder jobs = JobDesc.newBuilder();
 			nmspace = cursor.curr().get("NameSpace").toString();
-			ownerId = (long)(cursor.curr().get("Owner ID"));
+			ownerId = (Long)(cursor.curr().get("Owner ID"));
 			Jobid = cursor.curr().get("Job ID").toString();
 			status = (JobCode)cursor.curr().get("Job Status Code");
 			nodetype = (NodeType)cursor.curr().get("Node Type");
@@ -258,8 +258,8 @@ public class MongoDao {
 			
 			eNode.setName(obj.get("Name").toString());
 			eNode.setIp(obj.get("ip").toString());
-			eNode.setPort((int) obj.get("port"));
-			eNode.setMgmtPort((int) obj.get("mgmtPort"));
+			eNode.setPort((Integer) obj.get("port"));
+			eNode.setMgmtPort((Integer) obj.get("mgmtPort"));
 			
 			extNodes.add(eNode);
 		}
