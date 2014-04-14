@@ -105,6 +105,9 @@ class PyClient():
       print "Job Id - " + str(resp.body.job_status.job_id)
       print "Status of job request - " + str(resp.body.job_status.status)
       print "State of the job  - " + str(resp.body.job_status.job_state)
+      data = resp.body.job_status.data
+      for course in data:
+        print course.value
                       
   def run(self, host, port, request):
     self.channel = self.channelFactory.openChannel(host, port)
