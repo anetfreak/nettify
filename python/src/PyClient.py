@@ -31,6 +31,12 @@ class PyClient():
           print "Preparing to send job request to get other MOOC's courses to server <" + str(host) + ":" + str(port) +">"
           response = self.run(host, port, request)
           self.printJobRequest(response)
+      elif choice == "competition":
+          #Form Job request here and send it to the server. The server should take care of sending this to the external MOOC's
+          request = self.formJobRequest("competition")
+          print "Preparing to send job request to get other MOOC's courses to server <" + str(host) + ":" + str(port) +">"
+          response = self.run(host, port, request)
+          self.printJobRequest(response)
   
   def formPingRequest(self):
       request = Request()
