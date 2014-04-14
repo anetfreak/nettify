@@ -245,7 +245,10 @@ public class JobConnector {
 
 	public boolean handleIncomingRequest(Management msg) {
 		if(msg.hasJobPropose())
-			JobExternalManager.getInstance().processRequest(msg.getJobPropose());
+		{
+			logger.info("I will not handle job proposal at my created channel");
+			//JobExternalManager.getInstance().processRequest(msg.getJobPropose());
+		}
 		else if(msg.hasJobBid())
 			JobExternalManager.getInstance().processRequest(msg.getJobBid());
 		else

@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import poke.server.JobOpManager;
 import poke.server.management.managers.ElectionManager;
+import poke.server.management.managers.JobExternalManager;
 import poke.server.management.managers.JobManager;
 import poke.server.resources.Resource;
 import poke.server.resources.ResourceFactory;
@@ -350,11 +351,25 @@ public class PerChannelQueue implements ChannelQueue {
 									reqOperation = req;
 									Management mgmt = rsc
 											.processMgmtRequest(req);
-									addJobToQueue(mgmt);
-									JobBid bidReq = waitForBid();
-									Request result = createJobOperation(bidReq);
-									JobOpManager.getInstance()
-									.submitJobOperation(sq, result);
+									
+									//For external servers do not support Job operation request
+									if(!req.getBody().getJobOp().getData().getNameSpace().equalsIgnoreCase("competition"))
+									{
+										addJobToQueue(mgmt);
+										JobBid bidReq = waitForBid();
+										Request result = createJobOperation(bidReq);
+										JobOpManager.getInstance()
+											.submitJobOperation(sq, result);
+									}
+									else
+									{
+										//Sending to external servers
+										JobExternalManager.getInstance().submitJobProposal(sq,mgmt);
+										addJobToQueue(mgmt);
+										JobBid bidReq = waitForBid();
+										Request status = createStatus(req, true, null);
+										submitJobStatus(status); 
+									}
 								} else {
 									logger.info("Received a JobOperation request . Checking if the request is for me.");
 									// Check if I have to handle the request

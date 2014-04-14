@@ -167,7 +167,7 @@ public class JobExternalManager {
 	 * @param req
 	 *            The proposal
 	 */
-	public void processRequest(JobProposal req) {
+	public void processRequest(JobProposal req, Channel ch) {
 		if(isLeader() /*&& isOwner()*/)
 		{
 			//TODO if(req.getOwnerId()) then do nothing
@@ -181,11 +181,11 @@ public class JobExternalManager {
 				logger.info("Job ID Received : " + req.getJobId());
 				logger.info("I start to bid for the job..!");
 				//startJobBidding(nodeId, req.getOwnerId(), req.getJobId());
-				startJobBidding(req);
+				startJobBidding(req, ch);
 				//forward proposal request too
-				Management.Builder b = Management.newBuilder();
-				b.setJobPropose(req);
-				sendResponse(b.build());
+				//Management.Builder b = Management.newBuilder();
+				//b.setJobPropose(req);
+				//sendResponse(b.build());
 			}
 		}
 	}
@@ -218,20 +218,26 @@ public class JobExternalManager {
 			{
 				jbworkerThread.start();
 			}
-				queue_JobBid.add(req);
+			//jobBids.add(req);
+			//JobBid finalJB = req;
+			PerChannelQueue pcq = queue_JobProposal.get(req.getJobId()).getPCQ();
+			pcq.putBidResponse(req);
+			queue_JobProposal.remove(req.getJobId());
+			map_JobBid.remove(req.getJobId());
+			//queue_JobBid.add(req);
 		}
 		else
 		{
-			Management.Builder b = Management.newBuilder();
-			b.setJobBid(req);
-			sendResponse(b.build());
+			//Management.Builder b = Management.newBuilder();
+			//b.setJobBid(req);
+			//sendResponse(b.build());
 		}
 	}
 
 	/**
 	 * Custom method for bidding for the proposed job
 	 */
-	public void startJobBidding(JobProposal jpReq) {
+	public void startJobBidding(JobProposal jpReq, Channel ch) {
 			try {
 				// sending job proposal request for bidding
 				JobBid.Builder jb = JobBid.newBuilder();
@@ -250,8 +256,9 @@ public class JobExternalManager {
 
 				Management.Builder b = Management.newBuilder();
 				b.setJobBid(jb);
-					sendResponse(b.build());
-
+				//	sendResponse(b.build());
+				if(ch.isOpen() && ch.isActive() && ch.isWritable())
+					ch.writeAndFlush(b.build());
 			} catch (Exception e) {
 				logger.error("Failed  to send bidding request to external servers");
 			}
@@ -329,8 +336,7 @@ public class JobExternalManager {
 						//check if there are 3 entries //TBD or if time expires
 						logger.info("Adding bid to hash map, Job Id: " + jobId + " Map Size: " + jobManager.map_JobBid.size());
 						ArrayList<JobBid> jobBids = jobManager.map_JobBid.get(jobId);
-						if(jobBids.size() >= Integer.parseInt(ResourceFactory.getCfg().getServer().getProperty("total_nodes"))-2)
-						{
+						
 							logger.info("Selected one bid, sending it to PCQ");
 							//remove and process and send response
 							jobBids.add(req);
@@ -340,12 +346,7 @@ public class JobExternalManager {
 							jobManager.queue_JobProposal.remove(jobId);
 							jobManager.map_JobBid.remove(jobId);
 							jobBids = null;
-						}
-						else
-						{
-							jobBids.add(req);
-							jobManager.map_JobBid.put(jobId,jobBids);
-						}
+						
 					}
 
 				}

@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import poke.server.management.ManagementQueue.ManagementQueueEntry;
 import poke.server.management.managers.ElectionManager;
 import poke.server.management.managers.HeartbeatManager;
+import poke.server.management.managers.JobExternalManager;
 import poke.server.management.managers.JobManager;
 import poke.server.management.managers.NetworkManager;
 import eye.Comm.Management;
@@ -94,9 +95,18 @@ public class InboundMgmtWorker extends Thread {
 				} else if (req.hasGraph()) {
 					NetworkManager.getInstance().processRequest(req.getGraph(), msg.channel, msg.sa);
 				} else if (req.hasJobBid()) {
-					JobManager.getInstance().processRequest(req.getJobBid());
+					if(req.getJobPropose().getNameSpace().equalsIgnoreCase("competition"))
+					{
+						logger.info("I will not handle Job Bid at this port, Send me Job Proposal instead");
+						JobExternalManager.getInstance().processRequest(req.getJobBid());
+					}
+					else
+						JobManager.getInstance().processRequest(req.getJobBid());
 				} else if (req.hasJobPropose()) {
-					JobManager.getInstance().processRequest(req.getJobPropose());
+					if(req.getJobPropose().getNameSpace().equalsIgnoreCase("competition"))
+						JobExternalManager.getInstance().processRequest(req.getJobPropose(),msg.channel);
+					else
+						JobManager.getInstance().processRequest(req.getJobPropose());
 				} else
 					logger.error("Unknown management message");
 
