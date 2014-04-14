@@ -619,6 +619,7 @@ public class PerChannelQueue implements ChannelQueue {
 					for(int i=0; i<coursesList.size(); i++){
 						nameV.setName("coursename");
 						nameV.setValue(coursesList.get(i));
+						nameV.setNodeType(NodeType.VALUE);
 						nameVal.addNode(nameV);
 					}
 
