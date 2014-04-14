@@ -17,7 +17,8 @@ if __name__ == '__main__':
       print "3. Get Description for a course"
       print "4. Contest Competition"
       print "5. Get More Courses from other MOOC's"
-      print "6. Quit"
+      print "6. Mock Inter-Mooc request"
+      print "7. Quit"
       
       choice = int(input("\nYour Option -> "))
       if choice == 1:
@@ -51,6 +52,14 @@ if __name__ == '__main__':
           port = int(input("Enter port: "))
           PyClient().chooseOperation(requestType, host, port)
       elif choice == 6:
+          #Sending External Courses Request to Server
+          requestType = "competition"
+          host = str(input("Enter host: "))
+          port = int(input("Enter port: "))
+          namespace = str(input("Enter Namespace: "))
+#           PyClient().chooseOperation(requestType, host, port)
+
+      elif choice == 7:
           print "Bye!"
           running = False
       else:
