@@ -129,7 +129,7 @@ public class MongoDao {
 	 */
 	public List<String> listCourses(){
 		
-		List<String> coursesName = null;
+		ArrayList<String> coursesName = new ArrayList<String>();
 		try {
 		DBCollection collection = getCoursesCollection();
 		BasicDBObject findQuery = new BasicDBObject();
