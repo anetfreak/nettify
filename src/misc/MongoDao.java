@@ -135,8 +135,10 @@ public class MongoDao {
 		BasicDBObject findQuery = new BasicDBObject();
 		DBCursor cursor = collection.find(findQuery);
 		while(cursor.hasNext()) {
-			System.out.println(cursor.next());
-			coursesName.add(cursor.curr().get("CourseName").toString());
+			//System.out.println(cursor.next());
+			//coursesName.add(cursor.curr().get("CourseName").toString());
+			DBObject obj = cursor.next();
+			coursesName.add(obj.get("CourseName").toString());
 		}
 		}
 		catch(MongoException me) {
