@@ -624,7 +624,7 @@ public class PerChannelQueue implements ChannelQueue {
 					}
 
 					jdesc.setOptions(nameVal);
-					js.setData(0, jdesc);
+					js.setData(1, jdesc);
 				}
 
 				// payload containing data for job

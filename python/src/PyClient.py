@@ -37,6 +37,13 @@ class PyClient():
           print "Preparing to send job request to get other MOOC's courses to server <" + str(host) + ":" + str(port) +">"
           response = self.run(host, port, request)
           self.printJobRequest(response)
+          
+  def sendMockJobProposal(self, ns, host, port):
+      #Form Ping request here and send it to the server.
+      request = self.formJobProposal(ns)
+      print "Preparing to send mock job proposal to server <" + str(host) + ":" + str(port) +">"
+      response = self.run(host, port, request)
+#       self.printPingRequest(response)
   
   def formPingRequest(self):
       request = Request()
@@ -71,6 +78,18 @@ class PyClient():
       data.status = 1  
       
       return request
+  
+  def formJobProposal(self, type):
+      
+      mgmt = Management()
+      proposal = mgmt.job_propose
+            
+      proposal.name_space = type
+      proposal.owner_id = 0
+      proposal.job_id = str(random.randint(1, 10000))
+      proposal.weight = 1  
+      
+      return proposal
   
   def printPingRequest(self, resp):
       print "\n==Response Received from Server==\n"
