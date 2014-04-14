@@ -417,8 +417,8 @@ public class PerChannelQueue implements ChannelQueue {
 												logger.info("Forwarding the Status Request");*/
 
 											} catch (Exception e) {
-												logger.info("Exception encountered in persisiting to the DB : "
-														+ e);
+												logger.info("Exception encountered in persisiting to the DB");
+												e.printStackTrace();
 											}
 										}
 										// if I get a job operation with REMOVE

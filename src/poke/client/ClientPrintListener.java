@@ -18,9 +18,13 @@ package poke.client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Parser;
+
 import poke.client.comm.CommListener;
 import poke.client.util.ClientUtil;
 import eye.Comm.Header;
+import eye.Comm.Request;
 
 /**
  * example listener that an application would use to receive events.

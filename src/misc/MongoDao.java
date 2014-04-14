@@ -130,13 +130,17 @@ public class MongoDao {
 	public List<String> listCourses(){
 		
 		List<String> coursesName = null;
-		
+		try {
 		DBCollection collection = getCoursesCollection();
 		BasicDBObject findQuery = new BasicDBObject();
 		DBCursor cursor = collection.find(findQuery);
 		while(cursor.hasNext()) {
 			System.out.println(cursor.next());
 			coursesName.add(cursor.curr().get("CourseName").toString());
+		}
+		}
+		catch(MongoException me) {
+			me.printStackTrace();
 		}
 		return coursesName;
 	}
