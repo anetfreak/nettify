@@ -624,7 +624,7 @@ public class PerChannelQueue implements ChannelQueue {
 					}
 
 					jdesc.setOptions(nameVal);
-					js.setData(1, jdesc);
+					js.addData(1, jdesc);
 				}
 
 				// payload containing data for job
@@ -678,7 +678,7 @@ public class PerChannelQueue implements ChannelQueue {
 					if (!jobDescList.isEmpty()) {
 						logger.info("List of Job Desc retireved from DB is not Empty.. !!");
 						for (int i = 0; i < jobDescList.size(); i++)
-							js.setData(i, jobDescList.get(i));
+							js.addData(i, jobDescList.get(i));
 					}
 				}
 
