@@ -110,13 +110,10 @@ class PyClient():
       jobDesc = resp.body.job_status.data
       print "Namespace  - " + str(jobDesc[0].name_space)
       print "Owner ID  - " + str(jobDesc[0].owner_id)
-      print "Courses: \n"
-      print "Node Type  - " + str(jobDesc[0].options.node_type)
-      print "Node Name  - " + str(jobDesc[0].options.name)
-      print "Node Value  - " + str(jobDesc[0].options.value)
-      for course in jobDesc[0].options.node[0]:
-        if course.node_type == 'VALUE':
-          print course.value
+      print "\nCourses on this MOOC: \n"
+      for course in jobDesc[0].options.node:
+#         if course.node_type == 'VALUE':
+        print str(course.value)
 
   def printJobBid(self, resp):
       print "\n==Management Response Received from Server==\n"
