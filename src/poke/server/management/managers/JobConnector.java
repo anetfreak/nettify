@@ -152,7 +152,7 @@ public class JobConnector {
 
 	private void init(ExternalNode e) {
 
-		// EventLoopGroup group = new NioEventLoopGroup();
+		EventLoopGroup group = new NioEventLoopGroup();
 		ExternalNode en = outgoingConn.get(e.getNodeId());
 		if (en == null) {
 			outgoingConn.put(e.getNodeId(), e);
@@ -171,7 +171,7 @@ public class JobConnector {
 		try {
 			// handler = new ServerConnHandler();
 			Bootstrap b = new Bootstrap();
-			// b.group(group).channel(NioSocketChannel.class).handler(handler);
+			b.group(group).channel(NioSocketChannel.class).handler(null);
 			b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000);
 			b.option(ChannelOption.TCP_NODELAY, true);
 			b.option(ChannelOption.SO_KEEPALIVE, true);
