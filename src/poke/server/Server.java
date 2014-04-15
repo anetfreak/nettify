@@ -42,6 +42,7 @@ import poke.server.management.managers.ElectionManager;
 import poke.server.management.managers.HeartbeatConnector;
 import poke.server.management.managers.HeartbeatData;
 import poke.server.management.managers.HeartbeatManager;
+import poke.server.management.managers.JobExternalManager;
 import poke.server.management.managers.JobManager;
 import poke.server.management.managers.NetworkManager;
 import poke.server.resources.ResourceFactory;
@@ -69,6 +70,7 @@ public class Server {
 	protected NetworkManager networkMgr;
 	protected HeartbeatManager heartbeatMgr;
 	protected ElectionManager electionMgr;
+	protected JobExternalManager jobExMgr;
 
 	/**
 	 * static because we need to get a handle to the factory from the shutdown
@@ -286,6 +288,7 @@ public class Server {
 		// create manager for accepting jobs
 		jobMgr = JobManager.getInstance(myId);
 		jobOpmgr = JobOpManager.getInstance(myId);
+		jobExMgr = JobExternalManager.getInstance(myId);
 		// establish nearest nodes and start receiving heartbeats
 		heartbeatMgr = HeartbeatManager.getInstance(myId);
 		HeartbeatConnector.getInstance().setNodeId(myId);

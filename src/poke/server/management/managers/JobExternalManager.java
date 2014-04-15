@@ -244,7 +244,7 @@ public class JobExternalManager {
 				
 				//setting the bid randomly
 				int min = 1, max = 10;
-				int bid = min + (int)(Math.random() * ((max - min) + 1));
+				int bid = 1;//min + (int)(Math.random() * ((max - min) + 1));
 				jb.setBid(bid);
 				
 				//set own node ID as the owner for this bid

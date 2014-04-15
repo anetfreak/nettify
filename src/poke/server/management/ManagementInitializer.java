@@ -20,7 +20,7 @@ public class ManagementInitializer extends ChannelInitializer<SocketChannel> {
 	@Override
 	public void initChannel(SocketChannel ch) throws Exception {
 		ChannelPipeline pipeline = ch.pipeline();
-
+		System.out.println("$$$$$$$$$$$$$$$$$$$$$ in Mgmt InitChannel");
 		// Enable stream compression (you can remove these two if unnecessary)
 		if (compress) {
 			pipeline.addLast("deflater", ZlibCodecFactory.newZlibEncoder(ZlibWrapper.GZIP));
