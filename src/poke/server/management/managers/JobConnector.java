@@ -137,9 +137,12 @@ public class JobConnector {
 	}
 
 	public void release(Channel ch) {
-		logger.info("Releaseing a connection: ", ch.remoteAddress());
+		
 		if (ch != null)
+		{
+			logger.info("Releaseing a connection: ", ch.remoteAddress());
 			ch.close();
+		}
 		// if(group != null)
 		// group.shutdownGracefully();
 	}
