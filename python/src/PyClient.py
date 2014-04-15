@@ -114,10 +114,9 @@ class PyClient():
       print "Node Type  - " + str(jobDesc[0].options.node_type)
       print "Node Name  - " + str(jobDesc[0].options.name)
       print "Node Value  - " + str(jobDesc[0].options.value)
-      print "Node Value  - " + str(jobDesc[0].options.node[0].value)
-#       for course in jobDesc[0].options:
-#         if course.node_type == 'VALUE':
-#           print course.value
+      for course in jobDesc[0].options.node[0]:
+        if course.node_type == 'VALUE':
+          print course.value
 
   def printJobBid(self, resp):
       print "\n==Management Response Received from Server==\n"
