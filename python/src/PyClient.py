@@ -1,5 +1,5 @@
 from SocketChannel import SocketChannel, SocketChannelFactory
-from comm_pb2 import Request, Header, Payload, RoutingPath, JobOperation
+from comm_pb2 import Request, Header, Payload, RoutingPath, JobOperation, Management
 import struct, random, sys
 
 class PyClient():
@@ -42,9 +42,9 @@ class PyClient():
       #Form Ping request here and send it to the server.
       request = self.formJobProposal(ns)
       print "Preparing to send mock job proposal to server <" + str(host) + ":" + str(port) +">"
-      response = self.run(host, port, request)
+      response = self.runMgmt(host, port, request)
       print "Received response"
-#       self.printPingRequest(response)
+      self.printJobBid(response)
   
   def formPingRequest(self):
       request = Request()
@@ -80,17 +80,17 @@ class PyClient():
       
       return request
   
-  def formJobProposal(self, type):
+  def formJobProposal(self, ns):
       
       mgmt = Management()
       proposal = mgmt.job_propose
             
-      proposal.name_space = type
+      proposal.name_space = ns
       proposal.owner_id = 0
       proposal.job_id = str(random.randint(1, 10000))
       proposal.weight = 1  
       
-      return proposal
+      return mgmt
   
   def printPingRequest(self, resp):
       print "\n==Response Received from Server==\n"
@@ -106,9 +106,26 @@ class PyClient():
       print "Job Id - " + str(resp.body.job_status.job_id)
       print "Status of job request - " + str(resp.body.job_status.status)
       print "State of the job  - " + str(resp.body.job_status.job_state)
-      data = resp.body.job_status.data.options
-      for course in data:
-        print course.value
+      
+      jobDesc = resp.body.job_status.data
+      print "Namespace  - " + str(jobDesc[0].name_space)
+      print "Owner ID  - " + str(jobDesc[0].owner_id)
+      print "Courses: \n"
+      print "Node Type  - " + str(jobDesc[0].options.node_type)
+      print "Node Name  - " + str(jobDesc[0].options.name)
+      print "Node Value  - " + str(jobDesc[0].options.value)
+      print "Node Value  - " + str(jobDesc[0].options.node[0].value)
+#       for course in jobDesc[0].options:
+#         if course.node_type == 'VALUE':
+#           print course.value
+
+  def printJobBid(self, resp):
+      print "\n==Management Response Received from Server==\n"
+      print "OwnerID - " + str(resp.job_bid.owner_id)
+      print "Namespace - " + str(resp.job_bid.name_space)
+      print "Job ID - " + str(resp.job_bid.job_id)
+      print "Bid received from the server - " + str(resp.job_bid.bid)
+
                       
   def run(self, host, port, request):
     self.channel = self.channelFactory.openChannel(host, port)
@@ -117,6 +134,20 @@ class PyClient():
       try:
           self.channel.write(request.SerializeToString())
           resp = Request()
+          resp.ParseFromString(self.channel.read())
+          return resp
+      except:
+        print sys.exc_info()[0]
+      finally:
+        self.channel.close()
+        
+  def runMgmt(self, host, port, request):
+    self.channel = self.channelFactory.openChannel(host, port)
+    while self.channel.connected:
+      print "Channel Connected..."
+      try:
+          self.channel.write(request.SerializeToString())
+          resp = Management()
           resp.ParseFromString(self.channel.read())
           return resp
       except:
