@@ -43,7 +43,7 @@ public class JobConnector {
 	protected static Logger logger = LoggerFactory.getLogger("JobConnector");
 	MongoDao mongoDao = new MongoDao();
 
-	// private ServerConnHandler handler;
+	private JobConnHandler handler;
 
 	// Class to store node Info
 	private class ExternalNode {
@@ -169,9 +169,9 @@ public class JobConnector {
 		}
 
 		try {
-			// handler = new ServerConnHandler();
+			handler = new JobConnHandler(this);
 			Bootstrap b = new Bootstrap();
-			b.group(group).channel(NioSocketChannel.class).handler(null);
+			b.group(group).channel(NioSocketChannel.class).handler(handler);
 			b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000);
 			b.option(ChannelOption.TCP_NODELAY, true);
 			b.option(ChannelOption.SO_KEEPALIVE, true);
